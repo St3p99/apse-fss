@@ -199,7 +199,7 @@ void fss(params* input){
 	MATRIX deltax = alloc_matrix(input->np, input->d);
 	type maxdeltaf;
 	type f_min; // verificare
-	type ind_f_min;
+	int ind_f_min;
 	while (it < input->iter){
 		// considerare solo deltaf per i pesci che si muovono
 		// aggiornare f_cur e aggiornare il valore minore
@@ -208,9 +208,14 @@ void fss(params* input){
 		mov_istintivo(&input, &deltaf, &deltax); //MANGIONE
 		calcola_baricentro(&input, &pesi, &baricentro); // ARCURI
 		mov_volitivo(&baricentro, &input);// ARCURI
-		update_param(&decadimento_ind, &decadimento_vol, &input); //PERNA
+		//------------UPDATE PARAMETERS------------------
+		input->stepind = input->stepind - decadimento_ind;
+		input->stepvol = input->stepvol - decadimento_vol;
 	}
-	calcola_pos_minf(&input); //PERNA
+	//------- RETURN POS MIN ---------------
+	// xh punta all'inizio della riga 
+	// si potrebbe accedere ad altre posizioni: ce ne fottiamo?
+	input->xh = &input->x[ind_f_min*input->d];
 }
 
 int main(int argc, char** argv) {
