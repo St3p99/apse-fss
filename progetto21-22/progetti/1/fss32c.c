@@ -73,10 +73,10 @@ typedef struct {
 * 	di memoria, ma a scelta del candidato possono essere 
 * 	memorizzate mediante array di array (float**).
 * 
-* 	In entrambi i casi il candidato dovrà inoltre scegliere se memorizzare le
+* 	In entrambi i casi il candidato dovrï¿½ inoltre scegliere se memorizzare le
 * 	matrici per righe (row-major order) o per colonne (column major-order).
 *
-* 	L'assunzione corrente è che le matrici siano in row-major order.
+* 	L'assunzione corrente ï¿½ che le matrici siano in row-major order.
 * 
 */
 
@@ -110,7 +110,7 @@ void dealloc_matrix(MATRIX mat) {
 * 	successivi N*M*4 byte: matrix data in row-major order --> numeri floating-point a precisione singola
 * 
 *****************************************************************************
-*	Se lo si ritiene opportuno, è possibile cambiare la codifica in memoria
+*	Se lo si ritiene opportuno, ï¿½ possibile cambiare la codifica in memoria
 * 	della matrice. 
 *****************************************************************************
 * 
@@ -180,6 +180,37 @@ void fss(params* input){
 	// -------------------------------------------------
 	// Codificare qui l'algoritmo Fish Search School
 	// -------------------------------------------------
+	// NOTA: inizializzazione matrix x fatta nel main
+	// 		 leggendo posizioni da file x32_8_64.ds2
+	// -------------------------------------------------
+	//-- inizializza peso Wi per ogni pesce i --//
+	MATRIX pesi = alloc_matrix(1, input->np);
+	int i;
+	for (i = 0; i < input->np; i++){
+		pesi[i] = input->wscale/2;
+	}
+	// -------------------------------------------------
+	int it = 0;
+	type decadimento_ind = input->stepind/input->iter;
+	type decadimento_vol = input->stepvol/input->iter;
+	VECTOR baricentro = alloc_matrix(1, input->d);
+	VECTOR f_cur = alloc_matrix(1, input->np);
+	VECTOR deltaf = alloc_matrix(1, input->np);
+	MATRIX deltax = alloc_matrix(input->np, input->d);
+	type maxdeltaf;
+	type f_min; // verificare
+	type ind_f_min;
+	while (it < input->iter){
+		// considerare solo deltaf per i pesci che si muovono
+		// aggiornare f_cur e aggiornare il valore minore
+		mov_individuali(&input, &deltaf, &deltax, &maxdeltaf, &f_cur, &f_min, &ind_f_min); //MORRONE
+		alimenta(&deltaf, &pesi); //MANGIONE
+		mov_istintivo(&input, &deltaf, &deltax); //MANGIONE
+		calcola_baricentro(&input, &pesi, &baricentro); // ARCURI
+		mov_volitivo(&baricentro, &input);// ARCURI
+		update_param(&decadimento_ind, &decadimento_vol, &input); //PERNA
+	}
+	calcola_pos_minf(&input); //PERNA
 }
 
 int main(int argc, char** argv) {
