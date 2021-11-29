@@ -231,18 +231,18 @@ void alimenta(VECTOR* deltaf, MATRIX* pesi, type* maxdeltaf, params* input){
 
 void mov_istintivo(params* input, VECTOR* deltaf, VECTOR* deltax){
 	type deltafsum = 0.0;
-	for(int i = 0; i<*input->np; i++){
-		deltafsum+=deltaf[i];
-	}//calcolo delta sum
 	int i = 0;
 	MATRIX ret = alloc_matrix(1, input->d);
 	while(i<*input->np){
+		deltafsum+=deltaf[i];
 		for(int j=0;j<*input->d;j++){
-			deltaxSum[j]+=deltax[i*(*input->np)+j]*(deltaf[i]); //memorizzata per riga, cambia.
+			deltaxSum[j]+=deltax[i*(*input->np)+j]*(deltaf[i]); 
 		}
 		i++;
 	}
-	ret = ret/deltafsum;
+	for(int j=0;j<*input->d;j++){
+		ret[j]=deltaxSum[j]/deltafsum[j]; 
+	}
 	for(int i = 0; i<*input->np; i++){
 		for(int j = 0; j<*input->d; j++){
 			*deltax[j]+=ret[j];
