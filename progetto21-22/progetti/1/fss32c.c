@@ -204,7 +204,7 @@ void fss(params* input){
 		// considerare solo deltaf per i pesci che si muovono
 		// aggiornare f_cur e aggiornare il valore minore
 		mov_individuali(&input, &deltaf, &deltax, &maxdeltaf, &f_cur, &f_min, &ind_f_min); //MORRONE
-		alimenta(&deltaf, &pesi); //MANGIONE
+		alimenta(&deltaf, &pesi, &input); //MANGIONE
 		mov_istintivo(&input, &deltaf, &deltax); //MANGIONE
 		calcola_baricentro(&input, &pesi, &baricentro); // ARCURI
 		mov_volitivo(&baricentro, &input);// ARCURI
@@ -217,6 +217,39 @@ void fss(params* input){
 	// si potrebbe accedere ad altre posizioni: ce ne fottiamo?
 	input->xh = &input->x[ind_f_min*input->d];
 }
+
+void alimenta(VECTOR* deltaf, MATRIX* pesi, type* maxdeltaf, params* input){
+	int i = 0;
+	while (i<*input->np){
+		pesi[i] = pesi[i] + (deltaf[i]/ *maxdeltaf);
+		i++;
+	}
+	// Assumo che il valore di maxdeltaf sia quello corretto
+	// ovvero il max valore di f calcolato rispetto i pesci
+	// che hanno eseguito un movimento valido
+}
+
+void mov_istintivo(params* input, VECTOR* deltaf, VECTOR* deltax){
+	type deltafsum = 0.0;
+	for(int i = 0; i<*input->np; i++){
+		deltafsum+=deltaf[i];
+	}//calcolo delta sum
+	int i = 0;
+	MATRIX ret = alloc_matrix(1, input->d);
+	while(i<*input->np){
+		for(int j=0;j<*input->d;j++){
+			deltaxSum[j]+=deltax[i*(*input->np)+j]*(deltaf[i]); //memorizzata per riga, cambia.
+		}
+		i++;
+	}
+	ret = ret/deltafsum;
+	for(int i = 0; i<*input->np; i++){
+		for(int j = 0; j<*input->d; j++){
+			*deltax[j]+=ret[j];
+		}
+	}
+}
+
 
 int main(int argc, char** argv) {
 
