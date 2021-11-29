@@ -245,7 +245,7 @@ void mov_istintivo(params* input, VECTOR* deltaf, VECTOR* deltax){
 	}
 	for(int i = 0; i<*input->np; i++){
 		for(int j = 0; j<*input->d; j++){
-			*deltax[j]+=ret[j];
+			deltax[j]+=ret[j];
 		}
 	}
 }
