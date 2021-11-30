@@ -191,6 +191,8 @@ void fss(params* input){
 	}
 	// -------------------------------------------------
 	int it = 0;
+	type oldPesoTotaleBraco(wscale/2)*input -> np;
+	type PesoTotaleBraco(wscale/2)*input -> np;
 	type decadimento_ind = input->stepind/input->iter;
 	type decadimento_vol = input->stepvol/input->iter;
 	VECTOR baricentro = alloc_matrix(1, input->d);
@@ -207,7 +209,7 @@ void fss(params* input){
 		alimenta(&deltaf, &pesi, &input); //MANGIONE
 		mov_istintivo(&input, &deltaf, &deltax); //MANGIONE
 		calcola_baricentro(&input, &pesi, &baricentro); // ARCURI
-		mov_volitivo(&baricentro, &input);// ARCURI
+		mov_volitivo(&input, &decadimento_vol,  &baricentro, &decadimento_vol);// ARCURI
 		//------------UPDATE PARAMETERS------------------
 		input->stepind = input->stepind - decadimento_ind;
 		input->stepvol = input->stepvol - decadimento_vol;
@@ -218,8 +220,48 @@ void fss(params* input){
 	input->xh = &input->x[ind_f_min*input->d];
 }
 
-void numeratoreBaricentro (params* input, VECTOR* pesi, VECTOR* numeratore){
+void mov_volitivo(params* input, type* decadimento_vol, VECTOR* baricentro, type* decadimento_vol){
+	type direzione = 1;
+	if(oldPesoTotaleBraco < pesoTotaleBraco){ direzione = -1; } 
+	type dist;
+	for(int i = 0; i < input -> np; i++){
+		distanza(&input, &i, &baricentro, &dist);
+		for(int j = 0; j < input -> d; j++){
+			x[i*(input->np)+j] = x[i*(input->np)+j] + (direzione*decadimento_vol*rand(0,1))*((x[i*(input->np)+j]-baricentro[j])/dist))
+		}
+	}
+	oldPesoTotaleBraco = pesoTotaleBraco;
+}
 
+void distanza (params* input, type* i, VECTOR* b, type* distanza){
+	type somma;
+	for(int j = 0; j < input -> d; j++){
+		somma += pow(input -> x[i+j]-b[i],2);
+	}
+	distanza = sqrt(somma) // verificare il tipo e la funzione
+}
+
+void calcolaBaricentro (params* input, VECTOR* pesi, VECTOR* baricentro){
+	VECTOR numeratore = alloc_matrix(1, input->d);
+	numeratoreBaricentro(&input, &pesi, &numeratore);
+	pesoTotaleBraco(&input, &pesi, &pesoTotaleBraco);
+	for(int i = 0, i < input -> d, i++){
+		baricentro[i] = numeratore[i]/pesoTotaleBraco;
+	}
+}
+
+void pesoTotaleBraco (params* input, VECTOR* pesi, type* denominatore){
+	for (int = i; i < input -> np; i++){
+		denominatore += pesi[i];
+	}
+}
+
+void numeratoreBaricentro ( params* input, VECTOR* pesi, VECTOR* numeratore ){
+	for(int i = 0; i < input-> np; i++ ){
+		for(int j = 0; j < input -> d; j++ ){
+			numeratore[j] += x[i*(input->np)+j]*pesi[i];
+		}
+	}
 }
 
 void alimenta(VECTOR* deltaf, MATRIX* pesi, type* maxdeltaf, params* input){
