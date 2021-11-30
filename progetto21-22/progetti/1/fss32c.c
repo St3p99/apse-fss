@@ -218,6 +218,10 @@ void fss(params* input){
 	input->xh = &input->x[ind_f_min*input->d];
 }
 
+void numeratoreBaricentro (params* input, VECTOR* pesi, VECTOR* numeratore){
+
+}
+
 void alimenta(VECTOR* deltaf, MATRIX* pesi, type* maxdeltaf, params* input){
 	int i = 0;
 	while (i<*input->np){
