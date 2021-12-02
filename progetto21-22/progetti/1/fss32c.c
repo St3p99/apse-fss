@@ -193,7 +193,7 @@ void fss(params* input){
 	MATRIX y = alloc_matrix(input->np, input->d);
 	// -------------------------------------------------
 	int it = 0;
-	type peso_tot_old = (input->wscale/2)*input -> np;
+	type peso_tot_old;
 	type peso_tot_cur = (input->wscale/2)*input -> np;
 	type decadimento_ind = input->stepind/input->iter;
 	type decadimento_vol = input->stepvol/input->iter;
@@ -224,7 +224,6 @@ void fss(params* input){
 }
 
 // MOVIMENTO INDIVIDUALE
-
 /*commenti costruttivi:
 vedere di utilizzare variabili ausiliarie delle funzioni per evitare di prelevare ogni volta i parametri in memoria, come quando
 in assembly usi i registri per memorizzare i dati in memoria.
@@ -238,7 +237,6 @@ void mov_individuali(params* input, VECTOR deltaf, MATRIX deltax, MATRIX y, type
   type y_quadro;
   type c_per_y;
   int spostati = 0; // è un contatore che conta il numero di pesci spostati;
-  int rimasti = 0; // è un contatore che conta il numero di pesci rimasti
 
   for(int pesce = 0; pesce < n_pesci; pesce++){ //numero pesci
     y_quadro = 0.0;
@@ -256,7 +254,6 @@ void mov_individuali(params* input, VECTOR deltaf, MATRIX deltax, MATRIX y, type
     type val_f_pesce_cur_posy = exp(y_quadro) + y_quadro - c_per_y;
     
     if(val_f_pesce_cur_posy >= f_cur[pesce]){ //vuol dire che non è una posizione migliore
-      rimasti++;
       deltaf[pesce] = 0.0; 
       // non  è necessario azzerrare le coordinate deltaX del pesce, poichè basta controllare il suo deltaf prima di accedervi.
     }// se il pesce non migliora il suo valore nella nuova coordinata non si sposta
@@ -273,7 +270,7 @@ void mov_individuali(params* input, VECTOR deltaf, MATRIX deltax, MATRIX y, type
     }// else	
   }//for
 
-  if( spostati >= rimasti){ // sono maggiori i pesci che si sono spostati, quindi mi conviene sovrascrivere y con i pesci che non si sono spostati
+  if( spostati >= input->np/2){ // sono maggiori i pesci che si sono spostati, quindi mi conviene sovrascrivere y con i pesci che non si sono spostati
     for (int pesce = 0; pesce < n_pesci; ++pesce){ // se i pesci non si sono spostati deltaf = 0
       if(deltaf[pesce] == 0){ // se i pesci non si sono spostati deltaf = 0
         for(int coordinata = 0; coordinata < n_coordinate; coordinata++){
@@ -297,34 +294,24 @@ void mov_individuali(params* input, VECTOR deltaf, MATRIX deltax, MATRIX y, type
   }//else	
 }//mov_individuale
 
-
-
 void inizializza_val_f(VECTOR f_cur, params* input, type* f_min, int* ind_f_min){// conviene il suo utilizzo solo nell'inizializzazione
   int n_pesci = input->np;
   int n_coordinate = input->d;
-  
   int pesce = 0;
   int coordinata;
-  
   type val_f_pesce_cur;
 
   calcola_f(input, pesce, &val_f_pesce_cur); // calcolo il valore della funzione del primo pesce per inizializzare i parametri  f_min e ind_f_min
-
   *f_min = val_f_pesce_cur; 
   *ind_f_min = pesce;
 
-  //così ho evitato di utilizzare un if(pesce == 0) che sarebbe stato effettuato ad ogni iterazione
-  
   for(pesce = 1; pesce < n_pesci; pesce++){ //numero pesci, ovviamente escludi il primo che hai già calcolato
 	calcola_f(input, pesce, &val_f_pesce_cur);	
-
     f_cur[pesce] = val_f_pesce_cur;
-  
     if(val_f_pesce_cur < *f_min){
       *f_min = val_f_pesce_cur;
       *ind_f_min = pesce;
-    }//inizializzazione del migliore	
-  
+    }//inizializzazione del migliore	  
   }//iterazione su tutti i pesci
 }//inizializza_val_f
 
@@ -345,18 +332,13 @@ void calcola_f(params* input, int pesce, type* ret){
     *ret = exp(x_quadro) + x_quadro - c_per_x;
 }
 
-
-
-/*se da problemi occhio alle inizializzazioni*/
-/* Nel codice ho utilizzato variabili interne alle funzioni  per evitare di fare due accessi in memoria (come fosse un registro in assembly)*/
 // MOV VOLITIVO
-
 void mov_volitivo(params* input, type decadimento_vol, VECTOR baricentro, type* peso_tot_old, type* peso_tot_cur){
 	type direzione = 1;
 	if(peso_tot_old < peso_tot_cur){ direzione = -1; } 
 	type dist;
 	for(int i = 0; i < input -> np; i++){
-		calcolaDistanza(&input, i, &baricentro, &dist);
+		calcola_distanza(&input, i, &baricentro, &dist);
 		for(int j = 0; j < input -> d; j++){
 			input->x[i*(input->np)+j] = input->x[i*(input->np)+j] + (direzione*decadimento_vol)*((input->x[i*(input->np)+j]-baricentro[j])/dist);
 		}
@@ -364,7 +346,7 @@ void mov_volitivo(params* input, type decadimento_vol, VECTOR baricentro, type* 
 	peso_tot_old = peso_tot_cur;
 }
 
-void calcolaDistanza (params* input, int i, VECTOR b, type* distanza){
+void calcola_distanza (params* input, int i, VECTOR b, type* distanza){
 	type somma = 0;
 	for(int j = 0; j < input -> d; j++){
 		somma += input->x[i+j]- b[i]*input->x[i+j]-b[i];
@@ -372,22 +354,22 @@ void calcolaDistanza (params* input, int i, VECTOR b, type* distanza){
 	*distanza = sqrt(somma); // verificare il tipo e la funzione
 }
 
-void calcolaBaricentro (params* input, VECTOR pesi, VECTOR baricentro, type* peso_tot_cur){
+void calcola_baricentro (params* input, VECTOR pesi, VECTOR baricentro, type* peso_tot_cur){
 	VECTOR numeratore = alloc_matrix(1, input->d);
-	numeratoreBaricentro(&input, &pesi, &numeratore);
-	calcolaPesoTotBranco(&input, &pesi, peso_tot_cur);
+	numeratore_baricentro(&input, &pesi, &numeratore);
+	calcola_peso_tot_branco(&input, &pesi, peso_tot_cur);
 	for(int i = 0; i < input -> d; i++){
 		baricentro[i] = numeratore[i]/(*peso_tot_cur);
 	}
 }
 
-void calcolaPesoTotBranco (params* input, VECTOR pesi, type* ret){
+void calcola_peso_tot_branco (params* input, VECTOR pesi, type* ret){
 	for (int i = 0; i < input -> np; i++){
 		*ret += pesi[i];
 	}
 }
 
-void numeratoreBaricentro ( params* input, VECTOR pesi, VECTOR numeratore ){
+void numeratore_baricentro ( params* input, VECTOR pesi, VECTOR numeratore ){
 	for(int i = 0; i < input-> np; i++ ){
 		for(int j = 0; j < input -> d; j++ ){
 			numeratore[j] += input->x[i*(input->np)+j]*pesi[i];
