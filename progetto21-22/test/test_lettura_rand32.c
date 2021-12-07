@@ -118,7 +118,7 @@ void save_data(char* filename, void* X, int n, int k) {
 
 int main(int argc, char** argv) {
 	int r, c;
-	char* randfilename = "/home/st3p99/progetto_apse/apse-fss/data/rand32_8_64_250.ds2";
+	char* randfilename = "./apse-fss/progetto21-22/data/rand32_8_64_250.ds2";
 	MATRIX rand = load_data(randfilename, &r, &c);
 	printf("Number of row: %d\n", r);
 	printf("Number of columns: %d\n", c);

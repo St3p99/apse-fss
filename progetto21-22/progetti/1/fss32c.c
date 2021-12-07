@@ -204,15 +204,16 @@ void fss(params* input){
 	type maxdeltaf;
 	type f_min; // verificare
 	int ind_f_min;
+	int ind_r = 0;
 	inizializza_val_f(f_cur, input, &f_min, &ind_f_min);
 	while (it < input->iter){
 		// considerare solo deltaf per i pesci che si muovono
 		// aggiornare f_cur e aggiornare il valore minore
-		mov_individuali(input, deltaf, deltax, y, &maxdeltaf, f_cur, &f_min, &ind_f_min); //MORRONE
+		mov_individuali(input, deltaf, deltax, y, &maxdeltaf, f_cur, &f_min, &ind_f_min, &ind_r); //MORRONE
 		alimenta(deltaf, pesi, maxdeltaf, input); //MANGIONE
 		mov_istintivo(input, deltaf, deltax); //MANGIONE
 		calcola_baricentro(input, pesi, baricentro, &peso_tot_cur); // ARCURI
-		mov_volitivo(input, decadimento_vol, baricentro, &peso_tot_old, &peso_tot_cur);// ARCURI
+		mov_volitivo(input, baricentro, &peso_tot_old, &peso_tot_cur, &ind_r);// ARCURI
 		//------------UPDATE PARAMETERS------------------
 		input->stepind = input->stepind - decadimento_ind;
 		input->stepvol = input->stepvol - decadimento_vol;
@@ -228,7 +229,7 @@ void fss(params* input){
 vedere di utilizzare variabili ausiliarie delle funzioni per evitare di prelevare ogni volta i parametri in memoria, come quando
 in assembly usi i registri per memorizzare i dati in memoria.
 */
-void mov_individuali(params* input, VECTOR deltaf, MATRIX deltax, MATRIX y, type* maxdeltaf, VECTOR f_cur, type* f_min, int* ind_f_min){
+void mov_individuali(params* input, VECTOR deltaf, MATRIX deltax, MATRIX y, type* maxdeltaf, VECTOR f_cur, type* f_min, int* ind_f_min, int* ind_r){
   int n_pesci = input->np;
   int n_coordinate = input->d;
   type sum_delta_f = 0.0; //sommo tutti i deltaf validi per il movimento istintivo
@@ -237,15 +238,16 @@ void mov_individuali(params* input, VECTOR deltaf, MATRIX deltax, MATRIX y, type
   type y_quadro;
   type c_per_y;
   int spostati = 0; // è un contatore che conta il numero di pesci spostati;
-
+  type rand;
   for(int pesce = 0; pesce < n_pesci; pesce++){ //numero pesci
     y_quadro = 0.0;
     c_per_y = 0.0;	
     for(int coordinata = 0; coordinata < n_coordinate; coordinata++){ // coordinate pesce
       type val_coordinata = input->x[n_coordinate*pesce+coordinata];
       type coef_coordinata = input->c[coordinata];
-
-      type coord_j_pesce_i = val_coordinata+random(-1,1)*copy_stepind; // coordinata j-esima del pesce i-esimo (scritto come def (1) nella traccia)
+	  rand = input->r[*ind_r]*2 - 1; 
+	  *ind_r = *ind_r + 1;
+      type coord_j_pesce_i = val_coordinata+rand*copy_stepind; // coordinata j-esima del pesce i-esimo (scritto come def (1) nella traccia)
       y_quadro += (coord_j_pesce_i*coord_j_pesce_i);
       c_per_y += (coord_j_pesce_i*coef_coordinata);
       y[n_coordinate*pesce+coordinata] = coord_j_pesce_i; 
@@ -333,14 +335,17 @@ void calcola_f(params* input, int pesce, type* ret){
 }
 
 // MOV VOLITIVO
-void mov_volitivo(params* input, type decadimento_vol, VECTOR baricentro, type* peso_tot_old, type* peso_tot_cur){
+void mov_volitivo(params* input,  VECTOR baricentro, type* peso_tot_old, type* peso_tot_cur, int* ind_r){
 	type direzione = 1;
 	if(peso_tot_old < peso_tot_cur){ direzione = -1; } 
 	type dist;
+	type rand;
 	for(int i = 0; i < input -> np; i++){
 		calcola_distanza(&input, i, &baricentro, &dist);
 		for(int j = 0; j < input -> d; j++){
-			input->x[i*(input->np)+j] = input->x[i*(input->np)+j] + (direzione*decadimento_vol)*((input->x[i*(input->np)+j]-baricentro[j])/dist);
+			rand = input->r[*ind_r]; 
+			*ind_r = *ind_r + 1;
+			input->x[i*(input->np)+j] = input->x[i*(input->np)+j] + (direzione)*(input->stepvol)*(rand)*((input->x[i*(input->np)+j]-baricentro[j])/dist);
 		}
 	}
 	peso_tot_old = peso_tot_cur;
@@ -412,9 +417,9 @@ void mov_istintivo(params* input, VECTOR deltaf, VECTOR deltax){
 
 int main(int argc, char** argv) {
 	char fname[256];
-	char* coefffilename = NULL;
-	char* randfilename = NULL;
-	char* xfilename = NULL;
+	char* coefffilename = "./apse-fss/progetto21-22/data/coeff32_8.ds2";
+	char* randfilename = "./apse-fss/progetto21-22/data/rand32_8_64_250.ds2";
+	char* xfilename = "./apse-fss/progetto21-22/data/x32_8_64.ds2";
 	int i, j, k;
 	clock_t t;
 	float time;
