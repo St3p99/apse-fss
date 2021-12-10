@@ -118,14 +118,14 @@ void save_data(char* filename, void* X, int n, int k) {
 
 int main(int argc, char** argv) {
 	int r, c;
-	char* randfilename = "./apse-fss/progetto21-22/data/rand32_8_64_250.ds2";
-	MATRIX rand = load_data(randfilename, &r, &c);
+	char* filename = "../data/sol32_8_64_250.ds2";
+	MATRIX rand = load_data(filename, &r, &c);
 	printf("Number of row: %d\n", r);
 	printf("Number of columns: %d\n", c);
 	int i,j;
 	for(i = 0; i < r; i++){
 		for(j = 0; j < c; j++){
-			printf("x[i][j] = %lf\n", rand[i*c+j]); //row-major order
+			printf("x[%d][%d] = %lf\n", i, j, rand[i*c+j]); //row-major order
 		}
 	}
 
