@@ -118,7 +118,7 @@ void save_data(char* filename, void* X, int n, int k) {
 
 int main(int argc, char** argv) {
 	int r, c;
-	char* filename = "../data/sol32_8_64_250.ds2";
+	char* filename = "../data/coeff32_8.ds2";
 	MATRIX rand = load_data(filename, &r, &c);
 	printf("Number of row: %d\n", r);
 	printf("Number of columns: %d\n", c);
