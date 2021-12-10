@@ -288,8 +288,8 @@ void mov_individuali(params* input, VECTOR deltaf, MATRIX deltax, MATRIX y, type
     else{// il pesce ha acquisito una posizione migliore
 	  spostati++;
       deltaf[pesce] = val_f_pesce_cur_posy - f_cur[pesce];
-      if(deltaf[pesce] < *mindeltaf || *mindeltaf == 1) {
-		  *mindeltaf = deltaf[pesce]; //aggiorno il massimo deltaf
+      if(deltaf[pesce] < *mindeltaf ) {
+		  *mindeltaf = deltaf[pesce]; //aggiorno il minimo deltaf
 	  }
       sum_delta_f += deltaf[pesce];
       if(val_f_pesce_cur_posy <= *f_min){
@@ -385,7 +385,7 @@ void mov_volitivo(params* input,  VECTOR baricentro, type* peso_tot_old, type* p
 
 void calcola_distanza (params* input, int i, VECTOR b, type* distanza){
 	type somma = 0;
-	for(int j = 0; j < input -> d; j++){
+	for(int j = 0; j < input->d; j++){
 		somma += (input->x[i*input->d+j]- b[j])*(input->x[i*input->d+j]-b[j]);
 	}
 	*distanza = sqrt(somma); // verificare il tipo e la funzione
@@ -408,7 +408,11 @@ void calcola_peso_tot_branco (params* input, VECTOR pesi, type* ret){
 }
 
 void numeratore_baricentro ( params* input, VECTOR pesi, VECTOR numeratore ){
-	for(int i = 0; i < input-> np; i++ ){
+	int i = 0;
+	for(int j = 0; j < input -> d; j++ ){
+			numeratore[j] = input->x[i*(input->d)+j]*pesi[i];
+	}
+	for(i++; i < input-> np; i++ ){
 		for(int j = 0; j < input -> d; j++ ){
 			numeratore[j] += input->x[i*(input->d)+j]*pesi[i];
 		}
@@ -435,30 +439,31 @@ void alimenta(params* input, VECTOR deltaf, VECTOR pesi, type* mindeltaf){
 void mov_istintivo(params* input, VECTOR deltaf, VECTOR deltax){
 	type deltafsum = 0.0;
 	int i = 0;
-	VECTOR ret = alloc_matrix(1, input->d);
+	VECTOR I = alloc_matrix(1, input->d); // inizialmente si accumula il numeratore
+	for(int j=0; j < input->d;j++){
+		I[j] = deltax[i*(input->d)+j]*(deltaf[i]); 
+	} // Inizializza num per il primo pesce
+	i++;
 	while( i < input->np){
-		if(deltaf[i] != 0){
-			deltafsum += deltaf[i];
-			for(int j=0; j < input->d;j++){
-				ret[j] += deltax[i*(input->d)+j]*(deltaf[i]); 
-			}
+		deltafsum += deltaf[i]; // calcola denominatore
+		for(int j=0; j < input->d;j++){
+			I[j] += deltax[i*(input->d)+j]*(deltaf[i]); 
 		}
 		i++;
 	}
 	if( deltafsum == 0 ){
-		dealloc_matrix(ret);
+		dealloc_matrix(I);
 		return;
 	}
 	for(int j=0; j < input->d; j++){
-		ret[j] = ret[j]/deltafsum; 
+		I[j] = I[j]/deltafsum; 
 	}
 	for(int i = 0; i < input->np; i++){
 		for(int j = 0; j < input->d; j++){
-			input->x[i*input->d+j] += ret[j];
+			input->x[i*input->d+j] += I[j];
 		}
 	}
-	dealloc_matrix(ret);
-	
+	dealloc_matrix(I);
 }
 
 int main(int argc, char** argv) {
