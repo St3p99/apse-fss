@@ -208,7 +208,7 @@ void fss(params* input){
 	// sposta_a_cazzo(input);
 	VECTOR pesi = alloc_matrix(1, input->np);
 	int i;
-	for (i = 0; i < input->np; i++){
+	for(i = 0; i < input->np; i++){
 		pesi[i] = input->wscale/2;
 	}
 	//creazione matrix y per salvare le coordinate ipotetiche
@@ -216,7 +216,7 @@ void fss(params* input){
 	// -------------------------------------------------
 	int it = 0;
 	type peso_tot_old;
-	type peso_tot_cur = (input->wscale/2)*input -> np;
+	type peso_tot_cur = (input->wscale/2)*(input -> np);
 	type decadimento_ind = input->stepind/input->iter;
 	type decadimento_vol = input->stepvol/input->iter;
 	VECTOR baricentro = alloc_matrix(1, input->d);
@@ -228,25 +228,32 @@ void fss(params* input){
 	int ind_f_min;
 	int ind_r = 0;
 	inizializza_val_f(f_cur, input, &f_min, &ind_f_min);
-	if(!input->silent) printf("f(0) = %f\n", f_min);
+	if(!input->silent) printf("f iniziale = %f\n", f_min);
 	while (it < input->iter){
+		// printf("WHILE it = %d\n", it+1);
 		// considerare solo deltaf per i pesci che si muovono
 		// aggiornare f_cur e aggiornare il valore minore
 		mov_individuali(input, deltaf, deltax, y, &mindeltaf, f_cur, &f_min, &ind_f_min, &ind_r); //MORRONE
-		//stampa_coordinate(input);
+		// printf("post ind\n");
+		// stampa_coordinate(input);
 		alimenta(input, deltaf, pesi, &mindeltaf); //MANGIONE
-		//stampa_coordinate(input);
+		// printf("post alimenta\n");
+		// stampa_coordinate(input);
 		mov_istintivo(input, deltaf, deltax); //MANGIONE
-		//stampa_coordinate(input);
+		// printf("post ist\n");
+		// stampa_coordinate(input);
 		calcola_baricentro(input, pesi, baricentro, &peso_tot_cur); // ARCURI
-		//stampa_coordinate(input);
+		// printf("post bar\n");
+		// stampa_coordinate(input);
 		mov_volitivo(input, baricentro, &peso_tot_old, &peso_tot_cur, &ind_r);// ARCURI
-		//stampa_coordinate(input);
+		// printf("post vol\n");
+		// stampa_coordinate(input);
 		//------------UPDATE PARAMETERS------------------
 		input->stepind = input->stepind - decadimento_ind;
 		input->stepvol = input->stepvol - decadimento_vol;
 		it++;
 	}
+	printf("ind_r = %d\n", ind_r);
 	//------- RETURN POS MIN ---------------
 	// xh punta all'inizio della riga (ALIASING AD X[ind_f_min*d])
 	// si potrebbe accedere ad altre posizioni: ce ne fottiamo?
@@ -387,7 +394,7 @@ void mov_istintivo(params* input, VECTOR deltaf, VECTOR deltax){
 	
 	for(int j=0; j < n_coordinate; j++){
 		I[j] = deltax[pesce*(input->d)+j]*(deltaf[pesce]); 
-	} // Inizializza num per il primo pesce
+	} // Inizializza I per il primo pesce
 	
 	for(pesce = 1; pesce < n_pesci; pesce++){
 		deltafsum += deltaf[pesce]; // calcola denominatore
@@ -420,9 +427,9 @@ void mov_volitivo(params* input,  VECTOR baricentro, type* peso_tot_old, type* p
 	int n_coordinate = input->d;
 	for(int i = 0; i < n_pesci; i++){
 		calcola_distanza(input, i, baricentro, &dist);
+		rand = input->r[*ind_r]; 
+		*ind_r = *ind_r + 1;
 		for(int j = 0; j < n_coordinate; j++){
-			rand = input->r[*ind_r]; 
-			*ind_r = *ind_r + 1;
 			input->x[i*(n_coordinate)+j] += (direzione)*(input->stepvol)*(rand)*((input->x[i*(n_coordinate)+j]-baricentro[j])/dist);
 		}
 	}
@@ -447,7 +454,7 @@ void calcola_baricentro (params* input, VECTOR pesi, VECTOR baricentro, type* pe
 	}
 }
 
-void calcola_peso_tot_branco (params* input, VECTOR pesi, type* ret){
+void calcola_peso_tot_branco (params* input, VECTOR pesi, type *ret){
 	int n_pesci = input->np;
 	for (int i = 0; i < n_pesci; i++){
 		*ret = *ret + pesi[i];
@@ -470,9 +477,6 @@ void numeratore_baricentro ( params* input, VECTOR pesi, VECTOR numeratore ){
 
 int main(int argc, char** argv) {
 	char fname[256];
-	// char* coefffilename = "./apse-fss/progetto21-22/data/coeff32_8.ds2";
-	// char* randfilename = "./apse-fss/progetto21-22/data/rand32_8_64_250.ds2";
-	// char* xfilename = "./apse-fss/progetto21-22/data/x32_8_64.ds2";
 	char* coefffilename = NULL;
 	char* randfilename = NULL;
 	char* xfilename = NULL;
@@ -689,8 +693,8 @@ int main(int argc, char** argv) {
 	//
 	// Salva il risultato di xh
 	//
-	sprintf(fname, "xh32_%d_%d_%d.ds2", input->d, input->np, input->iter);
-	save_data(fname, input->xh, 1, input->d);
+	// sprintf(fname, "xh32_%d_%d_%d.ds2", input->d, input->np, input->iter);
+	// save_data(fname, input->xh, 1, input->d);
 	if(input->display){
 		if(input->xh == NULL)
 			printf("xh: NULL\n");
