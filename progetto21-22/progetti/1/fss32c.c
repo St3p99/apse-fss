@@ -174,7 +174,7 @@ void save_data(char* filename, void* X, int n, int k) {
 
 // PROCEDURE ASSEMBLY
 
-//extern void prova(params* input);
+// extern void prova(params* input);
 
 void sposta_coordinate_iniziali(params* input){
 	for(int pesce = 0; pesce < input->np; pesce++){ //numero pesci
@@ -230,7 +230,6 @@ void fss(params* input){
 	int ind_r = 0;
 	//-- calcola val_f su coordinate iniziali x e inizializza f_min e ind_f_min
 	inizializza_val_f(f_cur, input);
-	if(!input->silent) printf("f iniziale = %f\n", f_min);
 	while (it < input->iter){
 		//-- calcolo nuove coordinate, deltaf, deltax, mindeltaf, --//
 		mov_individuali(input, deltaf, deltax, y, &mindeltaf, f_cur, &ind_r);
@@ -659,7 +658,7 @@ int main(int argc, char** argv) {
 	}
 
 	// COMMENTARE QUESTA RIGA!
-	//prova(input);
+	// prova(input);
 	//
 
 	//

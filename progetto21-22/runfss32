@@ -2,6 +2,6 @@
 if [[ ! -e sseutils32.o ]]; then nasm -f elf32 sseutils32.nasm; fi;
 nasm -f elf32 fss32.nasm
 gcc -m32 -msse -O0 -no-pie sseutils32.o fss32.o fss32c.c -o fss32c -lm
-pars="";
+pars="-c ../../data/coeff32_8.ds2 -r ../../data/rand32_8_64_250.ds2 -x ../../data/x32_8_64.ds2 -np 64 -si 1 -sv 0.1 -w 10 -it 250 -d";
 for arg; do pars=$pars" "$arg; done;
 ./fss32c $pars

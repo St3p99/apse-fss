@@ -1,0 +1,6 @@
+fn=$(basename -a $1) 
+nasm -f elf32 $1.nasm -o ./$fn.o
+gcc -m32 -no-pie sseutils32.o $fn.o -o $fn
+./$fn
+rm ./$fn && rm ./$fn.o
+
