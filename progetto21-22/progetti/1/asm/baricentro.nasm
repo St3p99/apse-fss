@@ -69,9 +69,9 @@ for_blocco_coordinate:
         addps xmm3, xmm0
         movaps [r+ecx], xmm3
         
-        movaps xmm3, [r+ecx+p*dim]
-        addps xmm3, xmm1
-        movaps [r+ecx+p*dim], xmm3
+        movaps xmm4, [r+ecx+p*dim]
+        addps xmm4, xmm1
+        movaps [r+ecx+p*dim], xmm4
 
         printps r, 2
 
