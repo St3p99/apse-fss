@@ -438,18 +438,14 @@ void numeratore_baricentro ( params* input, VECTOR pesi, VECTOR numeratore ){
 	int n_pesci = input->np;
 	int n_coordinate = input->d;
 	int i = 0;
-	// printf("peso[0] = %f\n", pesi[0]);
 	for(int j = 0; j < n_coordinate; j++ ){
 		numeratore[j] = input->x[i*(n_coordinate)+j]*pesi[i];
-		// printf("x[%d][%d] = %f\n",i, j, input->x[i*(n_coordinate)+j]);
 	}
 	for(i++; i < n_pesci; i++ ){
-		// if(i==1)printf("peso[%d] = %f\n", i, pesi[i]);
 		for(int j = 0; j < n_coordinate; j++ ){
 			numeratore[j] += input->x[i*(n_coordinate)+j]*pesi[i];
 			if(i==1){
 				printf("numeratore[%d] = %f\n", j, numeratore[j]);
-				// printf("x[%d][%d] = %f\n",i, j, input->x[i*(n_coordinate)+j]);
 			}
 		}
 	}
