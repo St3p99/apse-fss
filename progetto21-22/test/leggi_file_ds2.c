@@ -118,14 +118,16 @@ void save_data(char* filename, void* X, int n, int k) {
 
 int main(int argc, char** argv) {
 	int r, c;
-	char* filename = "../data/x32_8_64.ds2";
+	char* filename = "../data/coeff32_8.ds2";
 	MATRIX m = load_data(filename, &r, &c);
 	printf("Number of row: %d\n", r);
 	printf("Number of columns: %d\n", c);
 	int i,j;
 	for(i = 0; i < r; i++){
 		for(j = 0; j < c; j++){
-			printf("x[%d][%d] = %f\n", i, j, m[i*c+j]); //row-major order
+			// printf("x[%d][%d] = %f\n", i, j, m[i*c+j]); //row-major order
+			printf("%f,", m[i*c+j]); //row-major order
 		}
 	}
+	
 }

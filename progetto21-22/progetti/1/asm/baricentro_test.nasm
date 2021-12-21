@@ -8,12 +8,12 @@
 
 section .data
     align 16
-    x dd 0.118514,-0.005789,-0.043927,0.050299,-0.006771,0.055706,0.022781,-0.035088,-0.099046,-0.088440,-0.074675,0.028111,-0.044493,-0.121398,-0.116429,0.046918,-0.123355,0.054130,-0.112776,-0.004180,-0.010522,-0.005729,-0.116061,-0.083888,0.094159,-0.044261,0.117518,-0.095124,-0.036630,0.106961,-0.042848,0.006060
+    inizio dd 0.3, 0.7, 0.3, 0.7
     align 16
-    w dd 5.0, 5.0, 5.0, 5.0
+    wi dd 5.0, 5.0, 5.0, 5.0
 
-    np      equ     4
-    d		equ		8
+    np      equ     65536
+    d		equ		4096
     dim		equ		4
     p		equ		4
     UNROLL		equ		2
@@ -23,11 +23,33 @@ section .bss
     r resd d
     alignb 16
     m resd p
+    alignb 16
+    x resd np*d
+    alignb 16
+    w resd np
 
 section .text
     global main
 main: 
     start
+    
+; iniz. x
+    movaps xmm0, [inizio]
+    mov ebx, 0
+    mov ecx, np*d/4
+ciclo: movaps [x+ebx], xmm0
+    add ebx, 16
+    dec ecx
+    jnz ciclo
+
+; iniz. w
+    movaps xmm0, [wi]
+    mov ebx, 0
+    mov ecx, np/4
+ciclo1: movaps [w+ebx], xmm0
+    add ebx, 16
+    dec ecx
+    jnz ciclo1
 
 ; ricordarsi macro per allocazione dinamica
 
@@ -40,7 +62,6 @@ main:
         ; XMM1 <- XMM1*XMM2 [x04*w0, x05*w0, x06*w0, x07*w0]
         ; ADDPS MEM[blocco i], XMM0 [num0, num1, num2, num3]
         ; ADDPS MEM[blocco i+1], XMM1 [num4, num5, num6, num7]
-
 
 ;   0    1    2    3    4    5    6    7       8    9   10   11   12    13   14   15
 ; [x00, x01, x02, x03, x04, x05, x06, x07] - [x10, x11, x12, x13, x14, x15, x16, x17]
@@ -88,17 +109,6 @@ for_blocco_coordinate:
         cmp     ebx, dim*np
         jb      for_pesci
 ; fine for_pesci
-
-; NOTA: si potrebbe fare loop unrolling anche sul for_pesci
-
-        printss r
-        printss r+4
-        printss r+8
-        printss r+12
-        printss r+16
-        printss r+20
-        printss r+24
-        printss r+28
 stop
 
-; nasm -f elf32 ./asm/baricentro.nasm  -o ./asm/baricentro.o && gcc -m32 -no-pie sseutils32.o ./asm/baricentro.o -o ./asm/baricentro && time ./asm/baricentro
+; nasm -f elf32 ./asm/baricentro_test.nasm  -o ./asm/baricentro_test.o && gcc -m32 -no-pie sseutils32.o ./asm/baricentro_test.o -o ./asm/baricentro_test && time ./asm/baricentro_test

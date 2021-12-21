@@ -176,13 +176,6 @@ void save_data(char* filename, void* X, int n, int k) {
 
 // extern void prova(params* input);
 
-void sposta_coordinate_iniziali(params* input){
-	for(int pesce = 0; pesce < input->np; pesce++){ //numero pesci
-		for(int coordinata = 0; coordinata < input->d - 1; coordinata++){ // coordinate pesce
-      		input->x[(input->d)*(pesce)+coordinata] += 1;
-		}
-	}
-}
 
 void stampa_coordinate(params* input){
 	if(input->silent) return;
@@ -204,7 +197,6 @@ void fss(params* input){
 	// NOTA: inizializzazione matrix x fatta nel main
 	// 		 leggendo posizioni da file x32_8_64.ds2
 	// -------------------------------------------------
-	// sposta_coordinate_iniziali(input);
 	//-- inizializza peso Wi per ogni pesce i --//
 	VECTOR pesi = alloc_matrix(1, input->np);
 	int i;
@@ -215,8 +207,8 @@ void fss(params* input){
 	MATRIX y = alloc_matrix(input->np, input->d);
 	// -------------------------------------------------
 	int it = 0;
-	type peso_tot_old;
-	type peso_tot_cur = (input->wscale/2)*(input -> np);
+	type peso_tot_cur = (input -> wscale/2)*(input -> np);
+	type peso_tot_old = peso_tot_cur;
 	type decadimento_ind = input->stepind/input->iter;
 	type decadimento_vol = input->stepvol/input->iter;
 	VECTOR baricentro = alloc_matrix(1, input->d);
@@ -229,7 +221,9 @@ void fss(params* input){
 	int ind_f_min;
 	int ind_r = 0;
 	//-- calcola val_f su coordinate iniziali x e inizializza f_min e ind_f_min
-	inizializza_val_f(f_cur, input);
+	calcola_val_f(f_cur, input);
+	calcola_f_min(input->np, f_cur, &f_min, &ind_f_min);
+	printf("f min iniziale = %f\n", f_min);
 	while (it < input->iter){
 		//-- calcolo nuove coordinate, deltaf, deltax, mindeltaf, --//
 		mov_individuali(input, deltaf, deltax, y, &mindeltaf, f_cur, &ind_r);
@@ -241,6 +235,7 @@ void fss(params* input){
 		calcola_baricentro(input, pesi, baricentro, &peso_tot_cur);
 		//-- esegui movimento volitivo --/
 		mov_volitivo(input, baricentro, &peso_tot_old, &peso_tot_cur, &ind_r);
+		calcola_val_f(f_cur, input);
 		//-- aggiorna parametri --//
 		input->stepind = input->stepind - decadimento_ind;
 		input->stepvol = input->stepvol - decadimento_vol;
@@ -318,23 +313,23 @@ void mov_individuali(params* input, VECTOR deltaf, MATRIX deltax, MATRIX y, type
   }//else
 }//mov_individuale
 
-void inizializza_val_f(VECTOR f_cur, params* input){// conviene il suo utilizzo solo nell'inizializzazione
+void calcola_val_f(VECTOR f_cur, params* input){// conviene il suo utilizzo solo nell'inizializzazione
   int n_pesci = input->np;
   int n_coordinate = input->d;
   int pesce = 0;
   int coordinata;
   type val_f_pesce_cur;
 
-  calcola_f(input, pesce, &val_f_pesce_cur); // calcolo il valore della funzione del primo pesce per inizializzare i parametri  f_min e ind_f_min
+  calcola_f_pesce(input, pesce, &val_f_pesce_cur); // calcolo il valore della funzione del primo pesce per inizializzare i parametri  f_min e ind_f_min
   f_cur[pesce] = val_f_pesce_cur;
 
   for(pesce = 1; pesce < n_pesci; pesce++){ //numero pesci, ovviamente escludi il primo che hai già calcolato
-	calcola_f(input, pesce, &val_f_pesce_cur);	
+	calcola_f_pesce(input, pesce, &val_f_pesce_cur);	
     f_cur[pesce] = val_f_pesce_cur;
   }//iterazione su tutti i pesci
 }//inizializza_val_f
 
-void calcola_f(params* input, int pesce, type* ret){
+void calcola_f_pesce(params* input, int pesce, type* ret){
 	int n_coordinate = input->d;
 	type val_i; 
   	type coef_i;
@@ -392,7 +387,9 @@ void mov_istintivo(params* input, VECTOR deltaf, VECTOR deltax, VECTOR I){
 // MOV VOLITIVO
 void mov_volitivo(params* input,  VECTOR baricentro, type* peso_tot_old, type* peso_tot_cur, int* ind_r){
 	type direzione = 1;
-	if(*peso_tot_old < *peso_tot_cur){ direzione = -1; } 
+	if(*peso_tot_old < *peso_tot_cur){
+		 direzione = -1; 
+	} 
 	type dist;
 	type rand;
 	int n_pesci = input->np;
@@ -429,6 +426,7 @@ void calcola_baricentro (params* input, VECTOR pesi, VECTOR baricentro, type* pe
 
 void calcola_peso_tot_branco (params* input, VECTOR pesi, type *ret){
 	int n_pesci = input->np;
+	*ret = 0;
 	for (int i = 0; i < n_pesci; i++){
 		*ret = *ret + pesi[i];
 	}
@@ -444,9 +442,6 @@ void numeratore_baricentro ( params* input, VECTOR pesi, VECTOR numeratore ){
 	for(i++; i < n_pesci; i++ ){
 		for(int j = 0; j < n_coordinate; j++ ){
 			numeratore[j] += input->x[i*(n_coordinate)+j]*pesi[i];
-			if(i==1){
-				printf("numeratore[%d] = %f\n", j, numeratore[j]);
-			}
 		}
 	}
 }
