@@ -175,6 +175,7 @@ void save_data(char* filename, void* X, int n, int k) {
 // PROCEDURE ASSEMBLY
 
 // extern void prova(params* input);
+extern void baricentro_asm( MATRIX x, int np, int d, VECTOR pesi, VECTOR baricentro, type* peso_tot_cur);
 
 
 void stampa_coordinate(params* input){
@@ -232,7 +233,9 @@ void fss(params* input){
 		//-- esegui movimento istintivo --//
 		mov_istintivo(input, deltaf, deltax, I);
 		//-- calcola baricentro --//
-		calcola_baricentro(input, pesi, baricentro, &peso_tot_cur);
+		// calcola_baricentro(input, pesi, baricentro, &peso_tot_cur);
+		baricentro_asm(input->x, input->np, input->d, pesi, baricentro, &peso_tot_cur);
+		// test(input, baricentro, baricentro_1, peso_tot_cur, peso_tot_cur_1, it);
 		//-- esegui movimento volitivo --/
 		mov_volitivo(input, baricentro, &peso_tot_old, &peso_tot_cur, &ind_r);
 		calcola_val_f(f_cur, input);
