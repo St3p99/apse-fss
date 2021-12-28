@@ -62,6 +62,7 @@ typedef struct {
 	type stepind; //parametro stepind
 	type stepvol; //parametro stepvol
 	type wscale; //parametro wscale
+	type a;
 	int display;
 	int silent;
 } params;
@@ -175,11 +176,15 @@ void save_data(char* filename, void* X, int n, int k) {
 // PROCEDURE ASSEMBLY
 
 // extern void prova(params* input);
+extern void baricentro_asm( MATRIX x, int np, int d, VECTOR pesi, VECTOR baricentro, type* peso_tot_cur);
 
-void sposta_coordinate_iniziali(params* input, type x){
+void sposta_coordinate_iniziali(params* input){
+	type a = input->a;
+	if( a == 0.0 ) return;
 	for(int pesce = 0; pesce < input->np; pesce++){ //numero pesci
 		for(int coordinata = 0; coordinata < input->d - 1; coordinata++){ // coordinate pesce
-			  input->x[(input->d)*(pesce)+coordinata] += x;
+		type r = ((type)rand()/(type)(RAND_MAX))*2 - 1; // random tra -1 e 1
+			  input->x[(input->d)*(pesce)+coordinata] += a*r;
 		}
 	}
 }
@@ -204,7 +209,7 @@ void fss(params* input){
 	// NOTA: inizializzazione matrix x fatta nel main
 	// 		 leggendo posizioni da file x32_8_64.ds2
 	// -------------------------------------------------
-	// sposta_coordinate_iniziali(input, 0.5); // sposta ogni coordinata di 2
+	sposta_coordinate_iniziali(input); // sposta ogni coordinata di 2
 	//-- inizializza peso Wi per ogni pesce i --//
 	VECTOR pesi = alloc_matrix(1, input->np);
 	int i;
@@ -239,7 +244,8 @@ void fss(params* input){
 		//-- esegui movimento istintivo --//
 		mov_istintivo(input, deltaf, deltax, I);
 		//-- calcola baricentro --//
-		calcola_baricentro(input, pesi, baricentro, &peso_tot_cur);
+		// calcola_baricentro(input, pesi, baricentro, &peso_tot_cur);
+		baricentro_asm(input->x, input->np, input->d, pesi, baricentro, &peso_tot_cur);
 		//-- esegui movimento volitivo --//
 		mov_volitivo(input, baricentro, &peso_tot_old, &peso_tot_cur);
 		//-- calcola val f             --//
@@ -498,7 +504,7 @@ int main(int argc, char** argv) {
 	//
 
 	if(argc <= 1){
-		printf("%s -c <c> -x <x> -np <np> -si <stepind> -sv <stepvol> -w <wscale> -it <itmax> [-s] [-d]\n", argv[0]);
+		printf("%s -c <c> -x <x> -np <np> -si <stepind> -sv <stepvol> -w <wscale> -it <itmax> -a <sposta_coordinate> [-s] [-d]\n", argv[0]);
 		printf("\nParameters:\n");
 		printf("\tc: il nome del file ds2 contenente i coefficienti\n");
 		printf("\tr: il nome del file ds2 contenente i numeri casuali\n");
@@ -508,6 +514,7 @@ int main(int argc, char** argv) {
 		printf("\tstepvol: valore iniziale del parametro per il movimento volitivo, default 0.1\n");
 		printf("\twscale: valore iniziale del peso, default 10\n");
 		printf("\titmax: numero di iterazioni, default 350\n");
+		printf("\ta: sposta coordinate, default 2\n");
 		printf("\nOptions:\n");
 		printf("\t-s: modo silenzioso, nessuna stampa, default 0 - false\n");
 		printf("\t-d: stampa a video i risultati, default 0 - false\n");
@@ -581,6 +588,14 @@ int main(int argc, char** argv) {
 				exit(1);
 			}
 			input->iter = atoi(argv[par]);
+			par++;
+		}else if (strcmp(argv[par],"-a") == 0) {
+			par++;
+			if (par >= argc) {
+				printf("Missing a value!\n");
+				exit(1);
+			}
+			input->a = atoi(argv[par]);
 			par++;
 		} else{
 			printf("WARNING: unrecognized parameter '%s'!\n",argv[par]);
