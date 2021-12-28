@@ -235,7 +235,6 @@ void fss(params* input){
 		//-- calcola baricentro --//
 		// calcola_baricentro(input, pesi, baricentro, &peso_tot_cur);
 		baricentro_asm(input->x, input->np, input->d, pesi, baricentro, &peso_tot_cur);
-		// test(input, baricentro, baricentro_1, peso_tot_cur, peso_tot_cur_1, it);
 		//-- esegui movimento volitivo --/
 		mov_volitivo(input, baricentro, &peso_tot_old, &peso_tot_cur, &ind_r);
 		calcola_val_f(f_cur, input);
