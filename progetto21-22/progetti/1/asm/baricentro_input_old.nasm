@@ -44,8 +44,8 @@ section .text
     pesi        equ     20
     baricentro  equ     24
     peso_tot    equ     28
-    msg	db	'ECCOCIIIII!!!!!!!!!',32,0
-    nl	db	10,0
+    ; msg	db	'ECCOCIIIII!!!!!!!!!',32,0
+    ; nl	db	10,0
     ; prints msg
 	; prints nl
 
@@ -56,24 +56,24 @@ baricentro_asm:
 	mov edx, [ebp+input_d] 
     mov esi, [ebp+baricentro] ; esi <- indirizzo vettore baricentro
 
-; azzera baricentro
+
+; azzera r
     xorps xmm0, xmm0
     mov ebx, 0
     mov ecx, edx
 ciclo_azzera_bar_8: 
-    cmp ecx, p*UNROLL_COORDINATE
-    jb  ciclo_azzera_bar ; jb salta se minore senza segno ;jl salta con segno
-    
     movaps [esi+ebx], xmm0
     movaps [esi+ebx+p*dim], xmm0
     
     add ebx, p*dim*UNROLL_COORDINATE
     
+    cmp ecx, p*UNROLL_COORDINATE
+    jl  ciclo_azzera_bar
     sub ecx, p*UNROLL_COORDINATE
     jmp ciclo_azzera_bar_8
 ciclo_azzera_bar:
     cmp ecx, zero
-    je fine_ciclo_azzera_bar ;je senza segno
+    jle fine_ciclo_azzera_bar
 
     movss [esi+ebx], xmm0
     add   ebx, dim
@@ -82,10 +82,12 @@ ciclo_azzera_bar:
 fine_ciclo_azzera_bar:
 
 xorps   xmm6,   xmm6
+
     ; edx < input_d
-    imul   edx,    dim        ; input_d*dim
-    mov    edi,    [ebp+input_np]
-    imul   edi,    dim         ; input_np*dim
+    mov     edi,    edx        ; edi < input_d
+    imul    edi,    dim        ; edi < input_d*dim
+    mov     edx,    [ebp+input_np]
+    imul    edx,    dim        ; 
     mov     ebx,    0          ; pesce i = 0
 for_pesci:
     mov     esi,    [ebp+pesi]       ; esi <- indirizzo vettore pesi
@@ -97,28 +99,11 @@ for_pesci:
 
     mov     ecx,    p*dim*UNROLL_COORDINATE                ; coordinata
 for_blocco_coordinate:
-        cmp     ecx,    edx                ; if( i+8 > n_coordinate )
+        cmp     ecx,    edi                 ; if( i+8 > n_coordinate )
         jg      fine_for_blocco_coordinate  ;   esci
 
         movaps  xmm0,   [eax+ecx-p*dim*UNROLL_COORDINATE] ; [xi, xi+1, xi+2, xi+3]
         movaps  xmm1,   [eax+ecx-p*dim]                   ; [xi+4, ...,      xi+7]
-        
-        ;   stampe
-        ; movaps [m], xmm0
-        ; printss m
-        ; printss m+4
-        ; printss m+8
-        ; printss m+12
-
-        ; movaps [m], xmm1
-        ; printss m
-        ; printss m+4
-        ; printss m+8
-        ; printss m+12
-
-        ; prints nl
-        ; prints nl
-        ;   stampe
 
         mulps   xmm0,   xmm2
         mulps   xmm1,   xmm2
@@ -132,11 +117,10 @@ for_blocco_coordinate:
         movaps [esi+ecx-p*dim], xmm4
 
         add     ecx,    p*dim*UNROLL_COORDINATE
-
         jmp     for_blocco_coordinate
 fine_for_blocco_coordinate:
     sub ecx, p*dim*UNROLL_COORDINATE
-    cmp ecx, edx
+    cmp ecx, edi
     je  next_2
 for_sing_coordinate:
     movss xmm0,    [eax+ecx]
@@ -145,21 +129,21 @@ for_sing_coordinate:
     movss xmm3,    [esi+ecx]
     addss xmm3,    xmm0
     movss [esi+ecx], xmm3
-    
+
     add ecx, dim
-    cmp ecx, edx
+    cmp ecx, edi
     jb  for_sing_coordinate
 next_2:
         mov     ecx,    p*dim*UNROLL_COORDINATE         ; coordinata
-        add     eax,    edx        ; (pesce+1)*d = pesce*d + d
+        add     eax,    edi        ; (pesce+1)*d = pesce*d + d
         shufps  xmm2,   xmm5, 01010101b  ; peso 1
         shufps  xmm2,   xmm2, 10101010b  ; peso 1 su tutto xmm2
 for_blocco_coordinate_2:
-        cmp     ecx,    edx                 ; if( i+8 > n_coordinate )
+        cmp     ecx,    edi                 ; if( i+8 > n_coordinate )
         jg      fine_for_blocco_coordinate_2  ;   esci
-        
-        movups  xmm0,   [eax+ecx-p*dim*UNROLL_COORDINATE] ; [xi, xi+1, xi+2, xi+3]
-        movups  xmm1,   [eax+ecx-p*dim]                   ; [xi+4, ...,      xi+7]
+
+        movaps  xmm0,   [eax+ecx-p*dim*UNROLL_COORDINATE] ; [xi, xi+1, xi+2, xi+3]
+        movaps  xmm1,   [eax+ecx-p*dim]                   ; [xi+4, ...,      xi+7]
 
         mulps   xmm0,   xmm2
         mulps   xmm1,   xmm2
@@ -176,7 +160,7 @@ for_blocco_coordinate_2:
         jmp     for_blocco_coordinate_2
 fine_for_blocco_coordinate_2:
     sub ecx, p*dim*UNROLL_COORDINATE
-    cmp ecx, edx
+    cmp ecx, edi
     je  next_3
 for_sing_coordinate_2:
     movss xmm0,    [eax+ecx]
@@ -187,19 +171,19 @@ for_sing_coordinate_2:
     movss [esi+ecx], xmm3
 
     add ecx, dim
-    cmp ecx, edx
+    cmp ecx, edi
     jb  for_sing_coordinate_2
 next_3:
         mov     ecx,    p*dim*UNROLL_COORDINATE         ; coordinata
-        add     eax,    edx
+        add     eax,    edi
         shufps  xmm2,   xmm5, 10101010b  ; peso 2
         shufps  xmm2,   xmm2, 10101010b  ; peso 2 su tutto xmm2
 for_blocco_coordinate_3:
-        cmp     ecx,    edx                 ; if( i+8 > n_coordinate )
+        cmp     ecx,    edi                 ; if( i+8 > n_coordinate )
         jg      fine_for_blocco_coordinate_3  ;   esci
 
-        movups  xmm0,   [eax+ecx-p*dim*UNROLL_COORDINATE] ; [xi, xi+1, xi+2, xi+3]
-        movups  xmm1,   [eax+ecx-p*dim]                   ; [xi+4, ...,      xi+7]
+        movaps  xmm0,   [eax+ecx-p*dim*UNROLL_COORDINATE] ; [xi, xi+1, xi+2, xi+3]
+        movaps  xmm1,   [eax+ecx-p*dim]                   ; [xi+4, ...,      xi+7]
 
         mulps   xmm0,   xmm2
         mulps   xmm1,   xmm2
@@ -216,7 +200,7 @@ for_blocco_coordinate_3:
         jmp     for_blocco_coordinate_3
 fine_for_blocco_coordinate_3:
     sub ecx, p*dim*UNROLL_COORDINATE
-    cmp ecx, edx
+    cmp ecx, edi
     je  next_4
 for_sing_coordinate_3:
     movss xmm0,    [eax+ecx]
@@ -227,19 +211,19 @@ for_sing_coordinate_3:
     movss [esi+ecx], xmm3
 
     add ecx, dim
-    cmp ecx, edx
+    cmp ecx, edi
     jb  for_sing_coordinate_3
 next_4:
         mov     ecx,    p*dim*UNROLL_COORDINATE          ; coordinata
-        add     eax,    edx
+        add     eax,    edi
         shufps  xmm2,   xmm5, 11111111b  ; peso 3
         shufps  xmm2,   xmm2, 10101010b  ; peso 3 su tutto xmm2
 for_blocco_coordinate_4:
-        cmp     ecx,    edx                 ; if( i+8 > n_coordinate )
+        cmp     ecx,    edi                 ; if( i+8 > n_coordinate )
         jg      fine_for_blocco_coordinate_4  ;   esci
 
-        movups  xmm0,   [eax+ecx-p*dim*UNROLL_COORDINATE] ; [xi, xi+1, xi+2, xi+3]
-        movups  xmm1,   [eax+ecx-p*dim]                   ; [xi+4, ...,      xi+7]
+        movaps  xmm0,   [eax+ecx-p*dim*UNROLL_COORDINATE] ; [xi, xi+1, xi+2, xi+3]
+        movaps  xmm1,   [eax+ecx-p*dim]                   ; [xi+4, ...,      xi+7]
 
         mulps   xmm0,   xmm2
         mulps   xmm1,   xmm2
@@ -256,7 +240,7 @@ for_blocco_coordinate_4:
         jmp     for_blocco_coordinate_4
 fine_for_blocco_coordinate_4:
     sub ecx, p*dim*UNROLL_COORDINATE
-    cmp ecx, edx
+    cmp ecx, edi
     je  next_4
 for_sing_coordinate_4:
     movss xmm0,    [eax+ecx]
@@ -267,22 +251,19 @@ for_sing_coordinate_4:
     movss [esi+ecx], xmm3
 
     add ecx, dim
-    cmp ecx, edx
+    cmp ecx, edi
     jb  for_sing_coordinate_4
 ; fine for coordinate
-        add     eax,    edx
+        add     eax,    edi
         add     ebx, dim*UNROLL_PESCI
-        cmp     ebx, edi
+        cmp     ebx, edx
         jb      for_pesci
 ; fine for_pesci
 
     haddps  xmm6, xmm6
     haddps  xmm6, xmm6
 
-for_div_8: 
-    cmp edi, p*dim*UNROLL_COORDINATE
-    jb  for_div ; jb salta se minore senza segno ;jl salta con segno
-
+for_div: 
     movaps xmm0,  [esi]
     divps  xmm0,  xmm6
     movaps [esi], xmm0
@@ -291,22 +272,13 @@ for_div_8:
     divps  xmm1,  xmm6
     movaps [esi+p*dim], xmm1
     
+    cmp edx, p*UNROLL_COORDINATE
+    jle  fine_div
     add esi,  p*dim*UNROLL_COORDINATE
-    sub edi, p*dim*UNROLL_COORDINATE
-    jmp for_div_8
-for_div:
-    cmp edi, zero
-    je aggiorna_peso_tot_corrente ;je senza segno
-
-    movss xmm0, [esi]
-    divss xmm0, xmm6
-    movss [esi], xmm0
-
-    add esi, dim
-    sub edi, dim
+    sub edx, p*UNROLL_COORDINATE
     jmp for_div
 
-aggiorna_peso_tot_corrente:
+fine_div:
     mov   eax,  [ebp+peso_tot]
     movss [eax], xmm6
 
