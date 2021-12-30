@@ -143,8 +143,8 @@ for_blocco_coordinate_2:
         cmp     ecx,    edx                 ; if( i+8 > n_coordinate )
         jg      fine_for_blocco_coordinate_2  ;   esci
 
-        movaps  xmm0,   [eax+ecx-p*dim*UNROLL_COORDINATE] ; [xi, xi+1, xi+2, xi+3]
-        movaps  xmm1,   [eax+ecx-p*dim]                   ; [xi+4, ...,      xi+7]
+        movups  xmm0,   [eax+ecx-p*dim*UNROLL_COORDINATE] ; [xi, xi+1, xi+2, xi+3]
+        movups  xmm1,   [eax+ecx-p*dim]                   ; [xi+4, ...,      xi+7]
 
         mulps   xmm0,   xmm2
         mulps   xmm1,   xmm2
@@ -183,8 +183,8 @@ for_blocco_coordinate_3:
         cmp     ecx,    edx                 ; if( i+8 > n_coordinate )
         jg      fine_for_blocco_coordinate_3  ;   esci
 
-        movaps  xmm0,   [eax+ecx-p*dim*UNROLL_COORDINATE] ; [xi, xi+1, xi+2, xi+3]
-        movaps  xmm1,   [eax+ecx-p*dim]                   ; [xi+4, ...,      xi+7]
+        movups  xmm0,   [eax+ecx-p*dim*UNROLL_COORDINATE] ; [xi, xi+1, xi+2, xi+3]
+        movups  xmm1,   [eax+ecx-p*dim]                   ; [xi+4, ...,      xi+7]
     
         mulps   xmm0,   xmm2
         mulps   xmm1,   xmm2
@@ -223,8 +223,8 @@ for_blocco_coordinate_4:
         cmp     ecx,    edx                 ; if( i+8 > n_coordinate )
         jg      fine_for_blocco_coordinate_4  ;   esci
 
-        movaps  xmm0,   [eax+ecx-p*dim*UNROLL_COORDINATE] ; [xi, xi+1, xi+2, xi+3]
-        movaps  xmm1,   [eax+ecx-p*dim]                   ; [xi+4, ...,      xi+7]
+        movups  xmm0,   [eax+ecx-p*dim*UNROLL_COORDINATE] ; [xi, xi+1, xi+2, xi+3]
+        movups  xmm1,   [eax+ecx-p*dim]                   ; [xi+4, ...,      xi+7]
 
         mulps   xmm0,   xmm2
         mulps   xmm1,   xmm2
