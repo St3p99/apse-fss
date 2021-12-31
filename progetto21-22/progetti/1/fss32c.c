@@ -233,8 +233,8 @@ void fss(params* input){
 		//-- esegui movimento istintivo --//
 		mov_istintivo(input, deltaf, deltax, I);
 		//-- calcola baricentro --//
-		calcola_baricentro(input, pesi, baricentro, &peso_tot_cur);
-		// baricentro_asm(input->x, input->np, input->d, pesi, baricentro, &peso_tot_cur);
+		// calcola_baricentro(input, pesi, baricentro, &peso_tot_cur);
+		baricentro_asm(input->x, input->np, input->d, pesi, baricentro, &peso_tot_cur);
 		//-- esegui movimento volitivo --/
 		mov_volitivo(input, baricentro, &peso_tot_old, &peso_tot_cur, &ind_r);
 		calcola_val_f(f_cur, input);

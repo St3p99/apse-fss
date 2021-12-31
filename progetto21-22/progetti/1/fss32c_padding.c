@@ -241,7 +241,8 @@ void save_data(char* filename, void* X, int n, int k) {
 // PROCEDURE ASSEMBLY
 
 // extern void prova(params* input);
-extern void baricentro_asm( MATRIX x, int np, int d, VECTOR pesi, VECTOR baricentro, type* peso_tot_cur);
+extern void baricentro_asm(MATRIX x, int np, int d, VECTOR pesi, VECTOR baricentro, type* peso_tot_cur);
+extern void calcola_I_asm(VECTOR deltax, int np, int d, VECTOR deltaf, VECTOR I);
 
 // METODI DI SUPPORTO
 void stampa_coordinate(params* input){
@@ -291,19 +292,15 @@ void fss(params* input){
 	type peso_tot_old = peso_tot_cur;
 	type decadimento_ind = input->stepind/input->iter;
 	type decadimento_vol = input->stepvol/input->iter;
-	
+
 	VECTOR baricentro = alloc_matrix(1, input->d + input->padding_d);
 	padding_vector(baricentro, input->d, input->padding_d);
-	
 	VECTOR I = alloc_matrix(1, input->d + input->padding_d);
 	padding_vector(I, input->d, input->padding_d);
-
 	VECTOR f_cur = alloc_matrix(1, input->np + input->padding_np);
 	padding_vector(f_cur, input->np, input->padding_np);
-	
 	VECTOR deltaf = alloc_matrix(1, input->np + input->padding_np);
 	padding_vector(deltaf, input->np, input->padding_np);
-	
 	MATRIX deltax = alloc_matrix(input->np, input->d + input->padding_d);
 	padding_matrix(deltax, input->np, input->d, input->padding_d);
 	//-- allocazione matrix y per salvare le coordinate a seguito del mov. individuale --//
@@ -326,9 +323,11 @@ void fss(params* input){
 		alimenta(input, deltaf, pesi, &mindeltaf);
 		//-- esegui movimento istintivo --//
 		mov_istintivo(input, deltaf, deltax, I);
+		// calcola_I_asm(deltax, input->np, input->d + input->padding_d, deltaf, I);
+		// mov_istintivo_asm(input->x, input->np, input->d + input->padding_d, I);
 		//-- calcola baricentro --//
-		// calcola_baricentro(input, pesi, baricentro, &peso_tot_cur);
-		baricentro_asm(input->x, input->np, input->d+input->padding_d, pesi, baricentro, &peso_tot_cur);
+		calcola_baricentro(input, pesi, baricentro, &peso_tot_cur);
+		// baricentro_asm(input->x, input->np, input->d+input->padding_d, pesi, baricentro, &peso_tot_cur);
 		//-- esegui movimento volitivo --/
 		mov_volitivo(input, baricentro, &peso_tot_old, &peso_tot_cur, &ind_r);
 		calcola_val_f(f_cur, input);
@@ -474,7 +473,7 @@ void mov_istintivo(params* input, VECTOR deltaf, VECTOR deltax, VECTOR I){
 	}
 	if( deltafsum == 0 ) return;
 	for(int j=0; j < n_coordinate; j++){
-		I[j] = I[j]/deltafsum; 
+		I[j] = I[j]/deltafsum;
 	}
 	for(int i = 0; i < n_pesci; i++){
 		for(int j = 0; j < n_coordinate; j++){

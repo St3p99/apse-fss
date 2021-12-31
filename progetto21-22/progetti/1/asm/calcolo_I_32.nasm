@@ -1,12 +1,6 @@
 %include 'sseutils32.nasm'
 
-; CALCOLA NUMERATORE BARICENTRO
-; Al momento funziona SOLO per coordinate multiple di 8.
-; È necessario gestire singolarmente le restanti coordinate
-
-; Rimane da calcolare il denominatore
-
-; ricordarsi macro per allocazione dinamica
+; CALCOLA VETTORE I (Movimento istintivo)
 
 ; per ogni pesce p [p=0]
     ; per ogni blocco da 8 coordinate
@@ -36,33 +30,33 @@ section .bss
     m resd p
 
 section .text
-    global baricentro_asm
+    global calcola_I_asm
 
-    input_x     equ     8
+    delta_x     equ     8
     input_np    equ     12
     input_d     equ     16
-    pesi        equ     20
-    baricentro  equ     24
-    peso_tot    equ     28
+    delta_f      equ     20
+    vector_i  equ     24
+
     msg	db	'ECCOCIIIII!!!!!!!!!',32,0
     nl	db	10,0
     ; prints msg
 	; prints nl
 
-baricentro_asm: 
+calcola_I_asm: 
     start
 
-    mov eax, [ebp+input_x]	; indirizzo della struttura contenente i parametri
+    mov eax, [ebp+delta_x]	; indirizzo della matrice delta_x
 	mov edx, [ebp+input_d] 
-    mov esi, [ebp+baricentro] ; esi <- indirizzo vettore baricentro
+    mov esi, [ebp+vector_i] ; esi <- indirizzo vettore I
 
-; azzera baricentro
+; azzera vector_i
     xorps xmm0, xmm0
     mov ebx, 0
     mov ecx, edx
-ciclo_azzera_bar_8: 
+ciclo_azzera_vector_i_8: 
     cmp ecx, p*UNROLL_COORDINATE
-    jb  ciclo_azzera_bar ; jb salta se minore senza segno ;jl salta con segno
+    jb  ciclo_azzera_vector_i ; jb salta se minore senza segno ;jl salta con segno
     
     movaps [esi+ebx], xmm0
     movaps [esi+ebx+p*dim], xmm0
@@ -70,16 +64,16 @@ ciclo_azzera_bar_8:
     add ebx, p*dim*UNROLL_COORDINATE
     
     sub ecx, p*UNROLL_COORDINATE
-    jmp ciclo_azzera_bar_8
-ciclo_azzera_bar:
+    jmp ciclo_azzera_vector_i_8
+ciclo_azzera_vector_i:
     cmp ecx, zero
-    je fine_ciclo_azzera_bar ;je senza segno
+    je fine_ciclo_azzera_vector_i ;je senza segno
 
     movss [esi+ebx], xmm0
     add   ebx, dim
     dec   ecx
-    jmp   ciclo_azzera_bar
-fine_ciclo_azzera_bar:
+    jmp   ciclo_azzera_vector_i
+fine_ciclo_azzera_vector_i:
 
 xorps   xmm6,   xmm6
     
@@ -90,11 +84,11 @@ for_pesci:
     cmp     ebx, edi ; pesce+4 > n_pesci
     jg      fine_for_pesci
 
-    mov     esi,    [ebp+pesi]       ; esi <- indirizzo vettore pesi
+    mov     esi,    [ebp+delta_f]       ; esi <- indirizzo vettore delta_f
     movaps  xmm5,   [esi+ebx*dim-UNROLL_PESCI*dim]        ; [wi, wi+1, wi+2, wi+3]
 
-    mov     esi,    [ebp+baricentro] ; esi <- indirizzo vettore baricentro
-    addps   xmm6,   xmm5             ; somma parziale pesi
+    mov     esi,    [ebp+vector_i] ; esi <- indirizzo vettore vector_i
+    addps   xmm6,   xmm5             ; somma parziale delta_f
     shufps  xmm2,   xmm5, 00000000b
     shufps  xmm2,   xmm2, 10101010b  ; peso 0 su tutto xmm2
 
@@ -250,10 +244,10 @@ fine_for_pesci:
     cmp ebx, edi
     je  next_div
     
-    mov     esi,    [ebp+pesi]       ; esi <- indirizzo vettore pesi    
+    mov     esi,    [ebp+delta_f]       ; esi <- indirizzo vettore delta_f    
     movaps   xmm5,   [esi+ebx*dim]        ; [wi, wi+1, wi+2, wi+3]
-    addps   xmm6,   xmm5             ; somma parziale pesi
-    mov     esi,    [ebp+baricentro] ; esi <- indirizzo vettore baricentro
+    addps   xmm6,   xmm5             ; somma parziale delta_f
+    mov     esi,    [ebp+vector_i] ; esi <- indirizzo vettore vector_i
 for_pesce:
     shufps  xmm2,   xmm5, 00000000b
     shufps  xmm2,   xmm2, 10101010b  ; peso 0 su tutto xmm2
@@ -299,7 +293,13 @@ next_pesce:
 
 next_div:
     haddps  xmm6, xmm6
-    haddps  xmm6, xmm6
+    haddps  xmm6, xmm6 ; xmm6 -> deltafsum
+
+    xorps xmm0, xmm0
+    cmpneqps xmm0, xmm6
+    pmovmskb eax, xmm0
+    cmp eax, zero
+    je return
 
 for_div_8: 
     cmp edx, p*dim*UNROLL_COORDINATE
@@ -319,16 +319,11 @@ for_div_8:
     jmp for_div_8
 last_div:
     cmp edx, zero
-    je aggiorna_peso_tot_corrente ;je senza segno
+    je return ;je senza segno
 
     movaps xmm0, [esi]
     divps xmm0, xmm6
     movaps [esi], xmm0
 
-aggiorna_peso_tot_corrente:
-    mov   eax,  [ebp+peso_tot]
-    movss [eax], xmm6
-    
+return:
 stop
-
-; nasm -f elf32 ./asm/baricentro.nasm  -o ./asm/baricentro.o && gcc -m32 -no-pie sseutils32.o ./asm/baricentro.o -o ./asm/baricentro && time ./asm/baricentro
