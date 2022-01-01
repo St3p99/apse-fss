@@ -33,6 +33,6 @@ def f(x): return np.exp(np.sum(x**2,axis=x.ndim-1))+ np.sum(x**2-c*x,axis=x.ndim
 
 xok = sc.optimize.minimize(f,-1/2*np.ones(d)).x;
 print(xok);
-
+print(f(xok));
 dssave(xok.reshape(1,d),'sol32_'+str(d)+'_'+str(nx)+'_'+str(iters)+'.ds2',dtype='f');
 dssave(xok.reshape(1,d),'sol64_'+str(d)+'_'+str(nx)+'_'+str(iters)+'.ds2',dtype='d');
