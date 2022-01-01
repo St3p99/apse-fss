@@ -56,7 +56,7 @@ calcola_I_asm:
     mov ecx, edx
 ciclo_azzera_vector_i_8: 
     cmp ecx, p*UNROLL_COORDINATE
-    jb  ciclo_azzera_vector_i ; jb salta se minore senza segno ;jl salta con segno
+    jb  fine_ciclo_azzera_vector_i_8 ; jb salta se minore senza segno ;jl salta con segno
     
     movaps [esi+ebx], xmm0
     movaps [esi+ebx+p*dim], xmm0
@@ -65,14 +65,11 @@ ciclo_azzera_vector_i_8:
     
     sub ecx, p*UNROLL_COORDINATE
     jmp ciclo_azzera_vector_i_8
-ciclo_azzera_vector_i:
+fine_ciclo_azzera_vector_i_8:
     cmp ecx, zero
     je fine_ciclo_azzera_vector_i ;je senza segno
 
-    movss [esi+ebx], xmm0
-    add   ebx, dim
-    dec   ecx
-    jmp   ciclo_azzera_vector_i
+    movaps [esi+ebx], xmm0
 fine_ciclo_azzera_vector_i:
 
 xorps   xmm6,   xmm6
