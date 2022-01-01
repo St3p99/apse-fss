@@ -2,22 +2,6 @@
 
 ; CALCOLA VETTORE I (Movimento istintivo)
 
-; per ogni pesce p [p=0]
-    ; per ogni blocco da 8 coordinate
-        ; XMM0 <- primo blocco da 4 (coordinate) [x00, x01, x02, x03]
-        ; XMM1 <- secondo blocco da 4 (coordinate) [x04, x05, x06, x07]
-        ; XMM2 <- peso[p] per tutti gli elementi del registro [w0]
-        ; XMM0 <- XMM0*XMM2 [x00*w0, x01*w0, x02*w0, x03*w0]
-        ; XMM1 <- XMM1*XMM2 [x04*w0, x05*w0, x06*w0, x07*w0]
-        ; ADDPS MEM[blocco i], XMM0 [num0, num1, num2, num3]
-        ; ADDPS MEM[blocco i+1], XMM1 [num4, num5, num6, num7]
-
-;   0    1    2    3    4    5    6    7       8    9   10   11   12    13   14   15
-; [x00, x01, x02, x03, x04, x05, x06, x07] - [x10, x11, x12, x13, x14, x15, x16, x17]
-
-; Accesso alla matrice per riga [i][j] => [i*n_colonne+j]
-; Inoltre, prendiamo blocchi di 4
-
 section .data
     dim		equ		4       ; dimensione operandi float (4byte)
     p		equ		4       ; packed (4 elementi alla volta)
@@ -38,8 +22,8 @@ section .text
     delta_f      equ     20
     vector_i  equ     24
 
-    msg	db	'ECCOCIIIII!!!!!!!!!',32,0
-    nl	db	10,0
+    ; msg	db	'ECCOCIIIII!!!!!!!!!',32,0
+    ; nl	db	10,0
     ; prints msg
 	; prints nl
 
@@ -56,7 +40,7 @@ calcola_I_asm:
     mov ecx, edx
 ciclo_azzera_vector_i_8: 
     cmp ecx, p*UNROLL_COORDINATE
-    jb  ciclo_azzera_vector_i ; jb salta se minore senza segno ;jl salta con segno
+    jb  fine_ciclo_azzera_vector_i_8 ; jb salta se minore senza segno ;jl salta con segno
     
     movaps [esi+ebx], xmm0
     movaps [esi+ebx+p*dim], xmm0
@@ -65,14 +49,11 @@ ciclo_azzera_vector_i_8:
     
     sub ecx, p*UNROLL_COORDINATE
     jmp ciclo_azzera_vector_i_8
-ciclo_azzera_vector_i:
+fine_ciclo_azzera_vector_i_8:
     cmp ecx, zero
     je fine_ciclo_azzera_vector_i ;je senza segno
 
-    movss [esi+ebx], xmm0
-    add   ebx, dim
-    dec   ecx
-    jmp   ciclo_azzera_vector_i
+    movaps [esi+ebx], xmm0
 fine_ciclo_azzera_vector_i:
 
 xorps   xmm6,   xmm6
@@ -85,12 +66,12 @@ for_pesci:
     jg      fine_for_pesci
 
     mov     esi,    [ebp+delta_f]       ; esi <- indirizzo vettore delta_f
-    movaps  xmm5,   [esi+ebx*dim-UNROLL_PESCI*dim]        ; [wi, wi+1, wi+2, wi+3]
+    movaps  xmm5,   [esi+ebx*dim-UNROLL_PESCI*dim]        ; [deltafi, deltafii+1, deltafii+2, deltafii+3]
 
     mov     esi,    [ebp+vector_i] ; esi <- indirizzo vettore vector_i
     addps   xmm6,   xmm5             ; somma parziale delta_f
     shufps  xmm2,   xmm5, 00000000b
-    shufps  xmm2,   xmm2, 10101010b  ; peso 0 su tutto xmm2
+    shufps  xmm2,   xmm2, 10101010b  ; deltaf 0 su tutto xmm2
 
     mov     ecx,    p*dim*UNROLL_COORDINATE                ; coordinata
 for_blocco_coordinate:
@@ -128,8 +109,8 @@ fine_for_blocco_coordinate:
 next_2:
         mov     ecx,    p*dim*UNROLL_COORDINATE         ; coordinata
         add     eax,    edx        ; (pesce+1)*d = pesce*d + d
-        shufps  xmm2,   xmm5, 01010101b  ; peso 1
-        shufps  xmm2,   xmm2, 10101010b  ; peso 1 su tutto xmm2
+        shufps  xmm2,   xmm5, 01010101b  ; delta_f 1
+        shufps  xmm2,   xmm2, 10101010b  ; delta_f 1 su tutto xmm2
 for_blocco_coordinate_2:
         cmp     ecx,    edx                 ; if( i+8 > n_coordinate )
         jg      fine_for_blocco_coordinate_2  ;   esci
@@ -164,8 +145,8 @@ fine_for_blocco_coordinate_2:
 next_3:
         mov     ecx,    p*dim*UNROLL_COORDINATE         ; coordinata
         add     eax,    edx
-        shufps  xmm2,   xmm5, 10101010b  ; peso 2
-        shufps  xmm2,   xmm2, 10101010b  ; peso 2 su tutto xmm2
+        shufps  xmm2,   xmm5, 10101010b  ; delta_f 2
+        shufps  xmm2,   xmm2, 10101010b  ; delta_f 2 su tutto xmm2
 for_blocco_coordinate_3:
         cmp     ecx,    edx                 ; if( i+8 > n_coordinate )
         jg      fine_for_blocco_coordinate_3  ;   esci
@@ -200,8 +181,8 @@ fine_for_blocco_coordinate_3:
 next_4:
         mov     ecx,    p*dim*UNROLL_COORDINATE          ; coordinata
         add     eax,    edx
-        shufps  xmm2,   xmm5, 11111111b  ; peso 3
-        shufps  xmm2,   xmm2, 10101010b  ; peso 3 su tutto xmm2
+        shufps  xmm2,   xmm5, 11111111b  ; delta_f 3
+        shufps  xmm2,   xmm2, 10101010b  ; delta_f 3 su tutto xmm2
 for_blocco_coordinate_4:
         cmp     ecx,    edx                 ; if( i+8 > n_coordinate )
         jg      fine_for_blocco_coordinate_4  ;   esci
@@ -250,7 +231,7 @@ fine_for_pesci:
     mov     esi,    [ebp+vector_i] ; esi <- indirizzo vettore vector_i
 for_pesce:
     shufps  xmm2,   xmm5, 00000000b
-    shufps  xmm2,   xmm2, 10101010b  ; peso 0 su tutto xmm2
+    shufps  xmm2,   xmm2, 10101010b  ; delta_f 0 su tutto xmm2
     shufps  xmm5,   xmm5, 00111001b  ; shift left circolare
     
     mov     ecx, p*dim*UNROLL_COORDINATE
