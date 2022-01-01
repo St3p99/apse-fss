@@ -141,7 +141,7 @@ MATRIX load_data(char* filename, int *n, int *k) {
 	return data;
 }
 
-MATRIX load_coeff(char* filename, int padding) {
+MATRIX load_coeff_padding(char* filename, int padding) {
 	FILE* fp;
 	int rows, cols, status, i;
 	
@@ -154,15 +154,16 @@ MATRIX load_coeff(char* filename, int padding) {
 	
 	status = fread(&cols, sizeof(int), 1, fp);
 	status = fread(&rows, sizeof(int), 1, fp);
-	
-	MATRIX data = alloc_matrix(cols, rows+padding);
+	MATRIX data = alloc_matrix(rows, cols+padding);
 	status = fread(data, sizeof(type), rows*cols, fp);
+	// padding
+	padding_vector(data, rows, padding);
 	fclose(fp);
 	
 	return data;
 }
 
-MATRIX load_data_padding(char* filename, int *n, int *k, int* padding_d) {
+MATRIX load_x_padding(char* filename, int *n, int *k, int* padding_d) {
 	FILE* fp;
 	int rows, cols, status, i;
 	
@@ -179,22 +180,24 @@ MATRIX load_data_padding(char* filename, int *n, int *k, int* padding_d) {
 	MATRIX data;
 	int mul = 4;
 	int resto_col = cols % mul;
-	if( resto_col != 0 ){	
-		*padding_d = (cols - resto_col + mul) - cols;
+	if( resto_col != 0 ){ // num_colonne non multiplo di mul (4)
+		*padding_d = (cols - resto_col + mul) - cols; // numero di zeri da aggiungere ad ogni riga
 		data = alloc_matrix(rows,cols + *padding_d);
-
 		int ptr = data;		
+		int n_cols_w_padding = cols + *padding_d; // numero di colonne considerando il padding
 		for(int i = 0; i < rows; i++){
-			status = fread(ptr, sizeof(type), cols, fp);
-			for(int j = cols; j < cols + *padding_d; j++){
-				data[i*(cols+*padding_d) + j] = 0.0;
-			}
-			ptr += (cols + *padding_d)*sizeof(type);
+			// load riga
+			status = fread(ptr, sizeof(type), cols, fp);			
+			// padding con *padding_d zeri alla fine della riga
+			padding_vector(&data[i*(n_cols_w_padding)], cols, *padding_d);
+			// ptr punterà all'inizio della prossima riga
+			ptr += (n_cols_w_padding)*sizeof(type);
 		}
 	}
 	else{
-		data = alloc_matrix(rows,cols);
+		// num_colonne multiplo di mul (4)
 		*padding_d = 0;
+		data = alloc_matrix(rows,cols);
 		status = fread(data, sizeof(type), rows*cols, fp);
 	}
 	fclose(fp);
@@ -204,6 +207,7 @@ MATRIX load_data_padding(char* filename, int *n, int *k, int* padding_d) {
 	
 	return data;
 }
+
 
 /*
 * 	save_data
@@ -243,6 +247,7 @@ void save_data(char* filename, void* X, int n, int k) {
 // extern void prova(params* input);
 extern void baricentro_asm(MATRIX x, int np, int d, VECTOR pesi, VECTOR baricentro, type* peso_tot_cur);
 extern void calcola_I_asm(VECTOR deltax, int np, int d, VECTOR deltaf, VECTOR I);
+extern void mov_istintivo_asm(MATRIX x, int np, int d, VECTOR I);
 
 // METODI DI SUPPORTO
 void stampa_coordinate(params* input){
@@ -265,8 +270,9 @@ void padding_vector(VECTOR v, int n, int n_padding){
 }
 
 void padding_matrix(MATRIX m, int r, int c, int n_padding){
+	int cols_w_padding = c+n_padding;
 	for(int i = 0; i < r; i++){
-		padding_vector(&m[i*(c+n_padding)], c, n_padding);
+		padding_vector(&m[i*(cols_w_padding)], c, n_padding);
 	}
 }
 
@@ -322,12 +328,12 @@ void fss(params* input){
 		//-- aggiorna pesi dei pesci --//
 		alimenta(input, deltaf, pesi, &mindeltaf);
 		//-- esegui movimento istintivo --//
-		mov_istintivo(input, deltaf, deltax, I);
-		// calcola_I_asm(deltax, input->np, input->d + input->padding_d, deltaf, I);
-		// mov_istintivo_asm(input->x, input->np, input->d + input->padding_d, I);
+		// mov_istintivo(input, deltaf, deltax, I);
+		calcola_I_asm(deltax, input->np, input->d + input->padding_d, deltaf, I);
+		mov_istintivo_asm(input->x, input->np, input->d + input->padding_d, I);
 		//-- calcola baricentro --//
-		calcola_baricentro(input, pesi, baricentro, &peso_tot_cur);
-		// baricentro_asm(input->x, input->np, input->d+input->padding_d, pesi, baricentro, &peso_tot_cur);
+		// calcola_baricentro(input, pesi, baricentro, &peso_tot_cur);
+		baricentro_asm(input->x, input->np, input->d+input->padding_d, pesi, baricentro, &peso_tot_cur);
 		//-- esegui movimento volitivo --/
 		mov_volitivo(input, baricentro, &peso_tot_old, &peso_tot_cur, &ind_r);
 		calcola_val_f(f_cur, input);
@@ -718,9 +724,8 @@ int main(int argc, char** argv) {
 		input->padding_np = (input->np - resto_righe + mul) - input->np;
 
 	input->r = load_data(randfilename, &x, &y); // no padding
-	input->x = load_data_padding(xfilename, &x, &input->d, &input->padding_d);
-	input->c = load_coeff(coefffilename, input->padding_d);
-	padding_vector(input->c, input->d, input->padding_d);
+	input->x = load_x_padding(xfilename, &x, &input->d, &input->padding_d);
+	input->c = load_coeff_padding(coefffilename, input->padding_d);
 
 	if(input->np < 0){
 		printf("Invalid value of np parameter!\n");
@@ -802,5 +807,6 @@ int main(int argc, char** argv) {
 
 	return 0;
 }
-// COMPILARE SENZA FILE ASM
+
+// PER COMPILARE SENZA FILE ASM
 // gcc -m32 -msse -O0 -no-pie ./sseutils32.o ./fss32c.c -o fss32c -lm && ./fss32c -c ../../data/coeff32_8.ds2 -r ../../data/rand32_8_64_250.ds2 -x ../../data/x32_8_64.ds2 -np 64 -si 1 -sv 0.1 -w 10 -it 250 -d
