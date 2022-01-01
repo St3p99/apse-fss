@@ -56,7 +56,7 @@ baricentro_asm:
     mov ecx, edx
 ciclo_azzera_bar_8: 
     cmp ecx, p*UNROLL_COORDINATE
-    jb  ciclo_azzera_bar ; jb salta se minore senza segno ;jl salta con segno
+    jb  fine_ciclo_azzera_bar_8 ; jb salta se minore senza segno ;jl salta con segno
     
     movaps [esi+ebx], xmm0
     movaps [esi+ebx+p*dim], xmm0
@@ -65,14 +65,11 @@ ciclo_azzera_bar_8:
     
     sub ecx, p*UNROLL_COORDINATE
     jmp ciclo_azzera_bar_8
-ciclo_azzera_bar:
+fine_ciclo_azzera_bar_8:
     cmp ecx, zero
     je fine_ciclo_azzera_bar ;je senza segno
 
-    movss [esi+ebx], xmm0
-    add   ebx, dim
-    dec   ecx
-    jmp   ciclo_azzera_bar
+    movaps [esi+ebx], xmm0
 fine_ciclo_azzera_bar:
 
 xorps   xmm6,   xmm6
