@@ -46,7 +46,7 @@ section .text
 baricentro_asm: 
     start
 
-    mov eax, [ebp+input_x]	; indirizzo della struttura contenente i parametri
+    mov eax, [ebp+input_x]	; indirizzo matrice x
 	mov edx, [ebp+input_d] 
     mov esi, [ebp+baricentro] ; esi <- indirizzo vettore baricentro
 
@@ -77,6 +77,13 @@ xorps   xmm6,   xmm6
     imul   edx,    dim        ; input_d*dim
     mov    edi,    [ebp+input_np]
     mov     ebx,    UNROLL_PESCI          ; pesce i = 0
+
+    ; eax <- matrice x
+    ; ebx <- pesce i-esimo
+    ; ecx <- coordinata j-esima
+    ; edx <- d*dim
+    ; edi <- np
+    ; esi <- vettore pesi | baricentro (scambio una volta ogni 4 pesci)
 for_pesci:
     cmp     ebx, edi ; pesce+4 > n_pesci
     jg      fine_for_pesci
