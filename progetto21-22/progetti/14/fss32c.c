@@ -245,14 +245,14 @@ void save_data(char* filename, void* X, int n, int k) {
 // PROCEDURE ASSEMBLY
 
 // extern void prova(params* input);
-extern void calcola_val_f_asm(MATRIX x, int np, int d, VECTOR c, VECTOR f_cur);
-extern void calcola_y_asm(MATRIX last_x, MATRIX last_y, int np, int d, int padding_d, type stepind, VECTOR r);
-extern void calcola_f_y_asm(MATRIX x, MATRIX y, VECTOR f_y, VECTOR deltax, int np, int d);
-extern void alimenta_asm(int np, VECTOR deltaf, VECTOR pesi, type mindeltaf);
-extern void calcola_I_asm(VECTOR deltax, int np, int d, VECTOR deltaf, VECTOR I);
-extern void mov_istintivo_asm(MATRIX x, int np, int d, VECTOR I);
-extern void baricentro_asm(MATRIX x, int np, int d, VECTOR pesi, VECTOR baricentro, type* peso_tot_cur);
-extern void mov_volitivo_asm(MATRIX x, int np, int d, int padding_d, type stepvol, VECTOR baricentro, int direzione, VECTOR r);
+extern void calcola_val_f_asm(MATRIX x, int np, int d, VECTOR c, VECTOR f_cur); // MORRONE
+extern void calcola_y_asm(MATRIX last_x, MATRIX last_y, int np, int d, int padding_d, type stepind, VECTOR r); // FATTO
+extern void calcola_f_y_asm(MATRIX x, MATRIX y, VECTOR f_y, VECTOR deltax, int np, int d); // MORRONE
+extern void alimenta_asm(int np, VECTOR deltaf, VECTOR pesi, type mindeltaf);  // PERNA MANGIONE
+extern void calcola_I_asm(VECTOR deltax, int np, int d, VECTOR deltaf, VECTOR I); // FATTO
+extern void mov_istintivo_asm(MATRIX x, int np, int d, VECTOR I); // FATTO
+extern void baricentro_asm(MATRIX x, int np, int d, VECTOR pesi, VECTOR baricentro, type* peso_tot_cur); // FATTO
+extern void mov_volitivo_asm(MATRIX x, int np, int d, int padding_d, type stepvol, VECTOR baricentro, int direzione, VECTOR r);  // PERNA MANGIONE
 
 // METODI DI SUPPORTO
 void stampa_coordinate(params* input){
