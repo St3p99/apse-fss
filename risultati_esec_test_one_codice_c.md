@@ -1,0 +1,54 @@
+# Risultati esecuzione di test_one su solo codice C
+
+Gruppo: progetti/14
+timeout 100 ./fss32c -c ../../data/coeff32_8.ds2 -r ../../data/rand32_8_64_250.ds2 -x ../../data/x32_8_64.ds2 -np 64 -si 0.1 -sv 0.0125 -w 1.25 -it 250
+Coefficient file name: '../../data/coeff32_8.ds2'
+Random numbers file name: '../../data/rand32_8_64_250.ds2'
+Initial fish position file name: '../../data/x32_8_64.ds2'
+Dimensions: 8
+Number of fishes [np]: 64
+Individual step [si]: 0.100000
+Volitive step [sv]: 0.012500
+Weight scale [w]: 1.250000
+Number of iterations [it]: 250
+f min iniziale = 1.035268
+f_min = 0.996083
+FSS time = 0.011 secs
+
+Done.
+Total time = 18
+ERR = 0.001033
+timeout 100 ./fss32c -c ../../data/coeff32_125.ds2 -r ../../data/rand32_125_735_750.ds2 -x ../../data/x32_125_735.ds2 -np 735 -si 0.006 -sv 0.0008 -w 0.08 -it 750
+Coefficient file name: '../../data/coeff32_125.ds2'
+Random numbers file name: '../../data/rand32_125_735_750.ds2'
+Initial fish position file name: '../../data/x32_125_735.ds2'
+Dimensions: 125
+Number of fishes [np]: 735
+Individual step [si]: 0.006000
+Volitive step [sv]: 0.000800
+Weight scale [w]: 0.080000
+Number of iterations [it]: 750
+f min iniziale = 1.004068
+f_min = 0.999668
+FSS time = 2.578 secs
+
+Done.
+Total time = 8531
+ERR = 0.002263
+timeout 100 ./fss32c -c ../../data/coeff32_256.ds2 -r ../../data/rand32_256_768_1250.ds2 -x ../../data/x32_256_768.ds2 -np 768 -si 0.003 -sv 0.0004 -w 0.04 -it 1250
+Coefficient file name: '../../data/coeff32_256.ds2'
+Random numbers file name: '../../data/rand32_256_768_1250.ds2'
+Initial fish position file name: '../../data/x32_256_768.ds2'
+Dimensions: 256
+Number of fishes [np]: 768
+Individual step [si]: 0.003000
+Volitive step [sv]: 0.000400
+Weight scale [w]: 0.040000
+Number of iterations [it]: 1250
+f min iniziale = 1.002131
+f_min = 0.999847
+FSS time = 12.155 secs
+
+Done.
+Total time = 56310
+ERR = 0.002354
