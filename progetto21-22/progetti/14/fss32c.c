@@ -246,7 +246,7 @@ void save_data(char* filename, void* X, int n, int k) {
 
 // extern void prova(params* input);
 extern void calcola_y_asm(MATRIX last_x, MATRIX last_y, int np, int d, int padding_d, type step_ind, VECTOR r);
-extern void calcola_f_y_asm(MATRIX x,MATRIX y, VECTOR f_y, VECTOR deltax, int np, int d, int padding_d);
+extern void calcola_f_y_asm(MATRIX x, MATRIX y, int np, int d, VECTOR deltax, VECTOR c, VECTOR y_quadro, VECTOR c_per_y);
 extern void alimenta_asm(int np, VECTOR deltaf, VECTOR pesi, type mindeltaf);
 extern void calcola_I_asm(VECTOR deltax, int np, int d, VECTOR deltaf, VECTOR I);
 extern void mov_istintivo_asm(MATRIX x, int np, int d, VECTOR I);
@@ -259,7 +259,7 @@ void stampa_coordinate(params* input){
 	if(input->silent) return;
 	for(int pesce = 0; pesce < input->np; pesce++){ //numero pesci
 		printf("x[%d] = [", pesce);	  
-		for(int coordinata = 0; coordinata < input->d - 1; coordinata++){ // coordinate pesce
+		for(int coordinata = 0; coordinata < input->d+input->padding_d; coordinata++){ // coordinate pesce
       		type val_coordinata = input->x[(input->d+input->padding_d)*(pesce)+coordinata];
 			printf(" %f, ", val_coordinata);	  
 		}
@@ -332,6 +332,9 @@ void fss(params* input){
 	//-- allocazione matrix y per salvare le coordinate a seguito del mov. individuale --//
 	MATRIX y = alloc_matrix(input->np, input->d + input->padding_d);
 	padding_matrix(y, input->np, input->d, input->padding_d);
+	
+	VECTOR x_quadro= alloc_matrix(1, input->np);
+	VECTOR c_per_x = alloc_matrix(1, input->np);
 
 	type mindeltaf;
 	type f_min;
@@ -342,10 +345,9 @@ void fss(params* input){
 	calcola_val_f(f_cur, input);
 	calcola_f_min(input->np, f_cur, &f_min, &ind_f_min);
 	if(!input->silent) printf("f min iniziale = %f\n", f_min);
-	int count = 0;
 	while (it < input->iter){
 		//-- calcolo nuove coordinate, deltaf, deltax, mindeltaf, --//
-		mov_individuali(input, deltaf, deltax, y, &mindeltaf, f_cur, f_y, &ind_r);
+		mov_individuali(input, deltaf, deltax, y, &mindeltaf, f_cur, f_y, &ind_r, x_quadro, c_per_x);
 		//-- aggiorna pesi dei pesci --//
 		if(mindeltaf < 0){
 			// alimenta(input, deltaf, pesi, &mindeltaf);
@@ -360,7 +362,8 @@ void fss(params* input){
 		baricentro_asm(input->x, input->np, input->d+input->padding_d, pesi, baricentro, &peso_tot_cur);
 		//-- esegui movimento volitivo --/
 		// mov_volitivo(input, baricentro, &peso_tot_old, &peso_tot_cur, &ind_r);
-		mov_volitivo_asm(input->x, input->np, input->d, input->padding_d, input->stepvol, baricentro, (peso_tot_old < peso_tot_cur) ? -1.0 : 1.0, &(input->r[ind_r]));
+		mov_volitivo_asm(input->x, input->np, input->d, input->padding_d, input->stepvol, 
+					    baricentro, (peso_tot_old < peso_tot_cur) ? -1.0 : 1.0, &(input->r[ind_r]));
 		ind_r += input->np; // necessario solo con chiamata a mov_volitivo_asm
 		peso_tot_old = peso_tot_cur; // necessario solo con chiamata a mov_volitivo_asm
 		// &(input->x[((input->np-1)*(input->d+input->padding_d))]): corrisponde all'indirizzo dell'ultima riga di input->x
@@ -378,74 +381,67 @@ void fss(params* input){
 }
 
 // MOVIMENTO INDIVIDUALE
-void mov_individuali(params* input, VECTOR deltaf, MATRIX deltax, MATRIX y, type* mindeltaf, VECTOR f_cur, VECTOR f_y, int* ind_r){
+void mov_individuali(params* input, VECTOR deltaf, MATRIX deltax, MATRIX y, type* mindeltaf, VECTOR f_cur, 
+						VECTOR f_y, int* ind_r, VECTOR y_quadro, VECTOR c_per_y){
   int n_pesci = input->np;
   int n_coordinate = input->d;
   int padding_d = input->padding_d;
   *mindeltaf = 1; // inizializzazione fittizia
   type copy_stepind = input->stepind;
-  type y_quadro;
-  type c_per_y;
+
   int spostati = 0; // conta il numero di pesci spostati;
   type rand;
   int indice_riga_ultimo_pesce = ((n_pesci-1)*(n_coordinate+padding_d));
   calcola_y_asm(input->x, y, n_pesci, n_coordinate, padding_d, copy_stepind, &(input->r[*ind_r]));
   *ind_r = *ind_r + n_pesci*n_coordinate;
-  //calcola_f_y_asm(input->x, y, f_y, deltax,  n_pesci, n_coordinate, padding_d);
-  for(int pesce = 0; pesce < n_pesci; pesce++){ // numero pesci
-    y_quadro = 0.0;
-    c_per_y = 0.0;	
-	for(int coordinata = 0; coordinata < n_coordinate; coordinata++){ // coordinate pesce
-      	type val_coordinata = input->x[(n_coordinate+padding_d)*(pesce)+coordinata];
-      	type coef_coordinata = input->c[coordinata];
-		// printf("rand = %f\n",input->r[*ind_r]);
-		// rand = (input->r[*ind_r]*2) - 1; 
-	  	// *ind_r = *ind_r + 1;
-		
-    //   type coord_j_pesce_i = val_coordinata+((rand)*(copy_stepind)); // coordinata j-esima del pesce i-esimo (scritto come def (1) nella traccia)
-	//   y[((n_coordinate+padding_d)*(pesce))+coordinata] = coord_j_pesce_i; 
-		type y_ij = y[((n_coordinate+padding_d)*(pesce))+coordinata];
-      
-	  y_quadro += (y_ij)*(y_ij);
-      c_per_y += (y_ij)*(coef_coordinata);
-      deltax[(n_coordinate+padding_d)*pesce+coordinata] = y_ij - val_coordinata; // aggiorno direttamente il delta x
-    }  // for coordinate
-	f_y[pesce] = exp(y_quadro) + y_quadro - c_per_y;
+  int indirizzo_ultima_riga_ultimo_elemento = ((n_pesci-1)*(n_coordinate+padding_d)+(n_coordinate+padding_d-1));
+  calcola_f_y_asm(
+	  &(input->x[indirizzo_ultima_riga_ultimo_elemento])+1, 
+	  &(y[indirizzo_ultima_riga_ultimo_elemento])+1, 
+	  n_pesci, 
+	  n_coordinate+padding_d, 
+	  &(deltax[indirizzo_ultima_riga_ultimo_elemento])+1, 
+	  &(input->c[n_coordinate+padding_d-1])+1,
+	  &(y_quadro[n_pesci-1])+1,
+	  &(c_per_y[n_pesci-1])+1
+);
 
+  for(int pesce = 0; pesce < n_pesci; pesce++){ // numero pesci
+    f_y[pesce] = exp(y_quadro[pesce]) + y_quadro[pesce] - c_per_y[pesce];
     if(f_y[pesce] >= f_cur[pesce]){ // la posizione non è migliore
-        deltaf[pesce] = 0.0; 
-        /* non  è necessario azzerrare le coordinate deltaX del pesce
-        poichè basta controllare il suo deltaf prima di accedervi. */
-    } // se il pesce non migliora non viene spostato
+		deltaf[pesce] = 0.0; 
+    }  // se il pesce non migliora non viene spostato
     else{ // il pesce ha acquisito una posizione migliore
-        spostati++;
+		spostati++;
         deltaf[pesce] = f_y[pesce] - f_cur[pesce];
         if(deltaf[pesce] < *mindeltaf ) *mindeltaf = deltaf[pesce]; //aggiorno il minimo deltaf
-    	    f_cur[pesce] = f_y[pesce]; // il nuovo valore del pesce
+    	f_cur[pesce] = f_y[pesce]; // il nuovo valore del pesce
     }// else
   }//for
-  
-    if( spostati >= n_pesci/2 ){ // sono maggiori i pesci che si sono spostati, quindi mi conviene sovrascrivere y con i pesci che non si sono spostati
-        for (int pesce = 0; pesce < n_pesci; pesce++){ // se i pesci non si sono spostati deltaf = 0
-            if(deltaf[pesce] == 0){ // se il pesce non si è spostato (deltaf = 0)
-                for(int coordinata = 0; coordinata < n_coordinate; coordinata++){
-                    y[(n_coordinate+padding_d)*pesce+coordinata] = input->x[(n_coordinate+padding_d)*pesce+coordinata];
-                }//tutte le coordinate di quel pesce	
-            }//if 	
-        }//for	
-        int tmp = (int) input->x;
-        input->x = y;
-        y = (float *) tmp;
-    }//if spostati >= rimasti	
-    else{ // sono maggiori i pesci che non si sono spostati
-        for(int pesce = 0; pesce < n_pesci; pesce++){ // se i pesci si sono spostati deltaf è diverso da 0
-            if(deltaf[pesce] != 0){
-                for(int coordinata = 0; coordinata < n_coordinate; coordinata++){
-                    input->x[(n_coordinate+padding_d)*pesce+coordinata] = y[(n_coordinate+padding_d)*pesce+coordinata];
-                }//tutte le coordinate di quel pesce	
-            }//if 	
-        }//for	
-    }//else
+
+
+	
+  if( spostati >= n_pesci/2 ){ // sono maggiori i pesci che si sono spostati, quindi mi conviene sovrascrivere y con i pesci che non si sono spostati
+    for(int pesce = 0; pesce < n_pesci; pesce++){ // se i pesci non si sono spostati deltaf = 0
+        if(deltaf[pesce] == 0){ // se il pesce non si è spostato (deltaf = 0)
+            for(int coordinata = 0; coordinata < n_coordinate; coordinata++){
+                y[(n_coordinate+padding_d)*pesce+coordinata] = input->x[(n_coordinate+padding_d)*pesce+coordinata];
+            }//tutte le coordinate di quel pesce	
+        }//if 	
+    }//for	
+    int tmp = (int) input->x;
+    input->x = y;
+    y = (float *) tmp;
+  }//if spostati >= rimasti	
+  else{ // sono maggiori i pesci che non si sono spostati
+    for(int pesce = 0; pesce < n_pesci; pesce++){ // se i pesci si sono spostati deltaf è diverso da 0
+        if(deltaf[pesce] != 0){
+            for(int coordinata = 0; coordinata < n_coordinate; coordinata++){
+                input->x[(n_coordinate+padding_d)*pesce+coordinata] = y[(n_coordinate+padding_d)*pesce+coordinata];
+            }//tutte le coordinate di quel pesce	
+        }//if 	
+    }//for	
+  }//else
 }//mov_individuale
 
 void calcola_val_f(VECTOR f_cur, params* input){// conviene il suo utilizzo solo nell'inizializzazione
@@ -532,6 +528,7 @@ void mov_volitivo(params* input,  VECTOR baricentro, type* peso_tot_old, type* p
 	int n_pesci = input->np;
 	int n_coordinate = input->d;
 	int padding_d = input->padding_d;
+
 	for(int i = 0; i < n_pesci; i++){
 		calcola_distanza(input, i, baricentro, &dist);
 		rand = input->r[*ind_r]; 
