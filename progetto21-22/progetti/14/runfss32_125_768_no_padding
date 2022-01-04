@@ -1,7 +1,7 @@
 #!/bin/bash
 if [[ ! -e sseutils32.o ]]; then nasm -f elf32 sseutils32.nasm; fi;
 nasm -f elf32 ./asm/baricentro_input.nasm;
-gcc -w -m32 -msse -O0 -no-pie sseutils32.o ./asm/baricentro_input.o fss32c_no_padding.c -o fss32c -lm;
+gcc -w -m32 -msse -O0 -no-pie sseutils32.o ./asm/baricentro_input.o fss32c_no_padding.c -o fss32c_no_padding -lm;
 pars="-c ../../data/coeff32_125.ds2 -r ../../data/rand32_125_768_750.ds2 -x ../../data/x32_125_768.ds2 -np 768 -si 0.006 -sv 0.0008 -w 0.08 -it 750 -d";
 # for arg; do pars=$pars" "$arg; done;
 echo $pars;

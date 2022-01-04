@@ -58,8 +58,8 @@ calcola_y_asm:
     ; ebx <- matrice y
     ; ecx <- coordinata j-esima | padding
     ; edx <- d*dim
-    ; edi <- pesce i-esimo (init a np; np--)
-    ; esi <- r
+    ; edi <- pesce i-esimo (init a np-1; np--)
+    ; esi <- rand
 
     mov eax, [ebp+input_x]	; indirizzo matrice x (init riga ultimo pesce da C)
     mov ebx, [ebp+matrix_y]	; indirizzo matrice y (init riga ultimo pesce da C)
@@ -134,6 +134,9 @@ next_2:
         sub     eax, ecx    ; eax -= (d+padding)*dim
         sub     ebx, ecx    ; ebx -= (d+padding)*dim
         
+        sub     esi, edx
+        sub     esi, edx    ; esi - 2*d*dim
+        
         mov     ecx,    p*dim*UNROLL_COORDINATE         ; coordinata
 for_blocco_coordinate_2:
         cmp     ecx,    edx                ; if( i+8 > n_coordinate )
@@ -145,6 +148,7 @@ for_blocco_coordinate_2:
         movups  xmm2,   [esi]       ; r[0..3]
         mulps   xmm2,   xmm6
         subps   xmm2,   xmm5
+        
         movups  xmm3,   [esi+p*dim] ; r[4..7]
         mulps   xmm3,   xmm6
         subps   xmm3,   xmm5
@@ -185,9 +189,11 @@ next_3:
         imul     ecx, dim    ; padding*dim
         ; aggiorna puntatori a pesce precedente
         add     ecx, edx    ;(d+padding)*dim
-        
         sub     eax, ecx    ; eax -= (d+padding)*dim
         sub     ebx, ecx    ; ebx -= (d+padding)*dim
+
+        sub     esi, edx
+        sub     esi, edx    ; esi - 2*d*dim
         
         mov     ecx,    p*dim*UNROLL_COORDINATE         ; coordinata
 for_blocco_coordinate_3:
@@ -238,12 +244,13 @@ for_sing_coordinate_3:
 next_4:
         mov     ecx, [ebp+padding] 
         imul     ecx, dim    ; padding*dim
-        
         ; aggiorna puntatori a pesce precedente
         add     ecx, edx    ;(d+padding)*dim
-        
         sub     eax, ecx    ; eax -= (d+padding)*dim
         sub     ebx, ecx    ; ebx -= (d+padding)*dim
+
+        sub     esi, edx
+        sub     esi, edx    ; esi - 2*d*dim
         
         mov     ecx,    p*dim*UNROLL_COORDINATE         ; coordinata
 for_blocco_coordinate_4:
@@ -299,6 +306,9 @@ next_pesci:
     add     ecx, edx    ;(d+padding)*dim
     sub     eax, ecx    ; eax -= (d+padding)*dim
     sub     ebx, ecx    ; ebx -= (d+padding)*dim
+
+    sub     esi, edx
+    sub     esi, edx    ; esi - 2*d*dim
 
     sub     edi, UNROLL_PESCI ; aggiorna contatore pesci
     jmp     for_pesci
@@ -362,6 +372,9 @@ next_pesce:
     add     ecx, edx    ;(d+padding)*dim
     sub     eax, ecx    ; eax -= (d+padding)*dim
     sub     ebx, ecx    ; ebx -= (d+padding)*dim
+
+    sub     esi, edx
+    sub     esi, edx    ; esi - 2*d*dim
     
     dec     edi
     cmp     edi, zero ; pesce+1 > n_pesci
