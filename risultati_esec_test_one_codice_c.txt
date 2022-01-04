@@ -1,4 +1,4 @@
-# Risultati esecuzione di test_one su solo codice C
+Risultati esecuzione di test_one su solo codice C
 
 Gruppo: progetti/14
 timeout 100 ./fss32c -c ../../data/coeff32_8.ds2 -r ../../data/rand32_8_64_250.ds2 -x ../../data/x32_8_64.ds2 -np 64 -si 0.1 -sv 0.0125 -w 1.25 -it 250
