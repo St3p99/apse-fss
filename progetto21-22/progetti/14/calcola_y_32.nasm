@@ -134,6 +134,9 @@ next_2:
         sub     eax, ecx    ; eax -= (d+padding)*dim
         sub     ebx, ecx    ; ebx -= (d+padding)*dim
         
+        sub     esi, edx
+        sub     esi, edx    ; esi - 2*d*dim
+        
         mov     ecx,    p*dim*UNROLL_COORDINATE         ; coordinata
 for_blocco_coordinate_2:
         cmp     ecx,    edx                ; if( i+8 > n_coordinate )
@@ -185,9 +188,11 @@ next_3:
         imul     ecx, dim    ; padding*dim
         ; aggiorna puntatori a pesce precedente
         add     ecx, edx    ;(d+padding)*dim
-        
         sub     eax, ecx    ; eax -= (d+padding)*dim
         sub     ebx, ecx    ; ebx -= (d+padding)*dim
+
+        sub     esi, edx
+        sub     esi, edx    ; esi - 2*d*dim
         
         mov     ecx,    p*dim*UNROLL_COORDINATE         ; coordinata
 for_blocco_coordinate_3:
@@ -238,12 +243,13 @@ for_sing_coordinate_3:
 next_4:
         mov     ecx, [ebp+padding] 
         imul     ecx, dim    ; padding*dim
-        
         ; aggiorna puntatori a pesce precedente
         add     ecx, edx    ;(d+padding)*dim
-        
         sub     eax, ecx    ; eax -= (d+padding)*dim
         sub     ebx, ecx    ; ebx -= (d+padding)*dim
+
+        sub     esi, edx
+        sub     esi, edx    ; esi - 2*d*dim
         
         mov     ecx,    p*dim*UNROLL_COORDINATE         ; coordinata
 for_blocco_coordinate_4:
@@ -299,6 +305,9 @@ next_pesci:
     add     ecx, edx    ;(d+padding)*dim
     sub     eax, ecx    ; eax -= (d+padding)*dim
     sub     ebx, ecx    ; ebx -= (d+padding)*dim
+
+    sub     esi, edx
+    sub     esi, edx    ; esi - 2*d*dim
 
     sub     edi, UNROLL_PESCI ; aggiorna contatore pesci
     jmp     for_pesci
@@ -362,6 +371,9 @@ next_pesce:
     add     ecx, edx    ;(d+padding)*dim
     sub     eax, ecx    ; eax -= (d+padding)*dim
     sub     ebx, ecx    ; ebx -= (d+padding)*dim
+
+    sub     esi, edx
+    sub     esi, edx    ; esi - 2*d*dim
     
     dec     edi
     cmp     edi, zero ; pesce+1 > n_pesci
