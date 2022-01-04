@@ -1,4 +1,7 @@
-Gruppo: progetti/1
+Risultati esecuzione di test_one su arch 32
+(mancano calcola_val_f_asm calcola_f_y_asm)
+
+Gruppo: progetti/14
 timeout 100 ./fss32c -c ../../data/coeff32_8.ds2 -r ../../data/rand32_8_64_250.ds2 -x ../../data/x32_8_64.ds2 -np 64 -si 0.1 -sv 0.0125 -w 1.25 -it 250
 Coefficient file name: '../../data/coeff32_8.ds2'
 Random numbers file name: '../../data/rand32_8_64_250.ds2'
@@ -9,12 +12,13 @@ Individual step [si]: 0.100000
 Volitive step [sv]: 0.012500
 Weight scale [w]: 1.250000
 Number of iterations [it]: 250
-f_min = 0.996082
-FSS time = 0.010 secs
+f min iniziale = 1.035268
+f_min = 0.996089
+FSS time = 0.004 secs
 
 Done.
-Total time = 28
-ERR = 0.001012
+Total time = 8
+ERR = 0.002110
 timeout 100 ./fss32c -c ../../data/coeff32_125.ds2 -r ../../data/rand32_125_735_750.ds2 -x ../../data/x32_125_735.ds2 -np 735 -si 0.006 -sv 0.0008 -w 0.08 -it 750
 Coefficient file name: '../../data/coeff32_125.ds2'
 Random numbers file name: '../../data/rand32_125_735_750.ds2'
@@ -25,12 +29,13 @@ Individual step [si]: 0.006000
 Volitive step [sv]: 0.000800
 Weight scale [w]: 0.080000
 Number of iterations [it]: 750
-f_min = 0.999668
-FSS time = 2.704 secs
+f min iniziale = 1.004068
+f_min = 0.999683
+FSS time = 0.964 secs
 
 Done.
-Total time = 5485
-ERR = 0.002243
+Total time = 1270
+ERR = 0.003543
 timeout 100 ./fss32c -c ../../data/coeff32_256.ds2 -r ../../data/rand32_256_768_1250.ds2 -x ../../data/x32_256_768.ds2 -np 768 -si 0.003 -sv 0.0004 -w 0.04 -it 1250
 Coefficient file name: '../../data/coeff32_256.ds2'
 Random numbers file name: '../../data/rand32_256_768_1250.ds2'
@@ -41,9 +46,10 @@ Individual step [si]: 0.003000
 Volitive step [sv]: 0.000400
 Weight scale [w]: 0.040000
 Number of iterations [it]: 1250
-f_min = 0.999846
-FSS time = 12.342 secs
+f min iniziale = 1.002131
+f_min = 0.999888
+FSS time = 3.960 secs
 
 Done.
-Total time = 39103
-ERR = 0.002232
+Total time = 5197
+ERR = 0.005127
