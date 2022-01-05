@@ -276,11 +276,13 @@ next_div:
     haddps  xmm6, xmm6
     haddps  xmm6, xmm6 ; xmm6 -> deltafsum
 
-    xorps xmm0, xmm0
-    cmpneqps xmm0, xmm6
-    pmovmskb eax, xmm0
-    cmp eax, zero
-    je return
+    ; DELTAFSUM != 0 IMPOSSIBILE
+    ; POICHÈ CONTROLLATO MINDELTAF < 0 PRECEDENEMENTE SU C
+    ; xorps xmm0, xmm0
+    ; cmpneqps xmm0, xmm6
+    ; pmovmskb eax, xmm0
+    ; cmp eax, zero
+    ; je return
 
 for_div_8: 
     cmp edx, p*dim*UNROLL_COORDINATE
@@ -307,4 +309,5 @@ last_div:
     movaps [esi], xmm0
 
 return:
+
 stop

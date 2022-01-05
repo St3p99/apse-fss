@@ -245,13 +245,14 @@ void save_data(char* filename, void* X, int n, int k) {
 // PROCEDURE ASSEMBLY
 
 // extern void prova(params* input);
-extern void calcola_y_asm(MATRIX last_x, MATRIX last_y, int np, int d, int padding_d, type step_ind, VECTOR r);
+extern void calcola_y_asm(MATRIX x, MATRIX y, int np, int d, int padding_d, type step_ind, VECTOR r);
 extern void calcola_f_y_asm(MATRIX x, MATRIX y, int np, int d, VECTOR deltax, VECTOR c, VECTOR y_quadro, VECTOR c_per_y);
+extern void calcola_val_f_asm(MATRIX x, int np, int d, VECTOR c, VECTOR x_quadro, VECTOR c_per_x);
 extern void alimenta_asm(int np, VECTOR deltaf, VECTOR pesi, type mindeltaf);
 extern void calcola_I_asm(VECTOR deltax, int np, int d, VECTOR deltaf, VECTOR I);
 extern void mov_istintivo_asm(MATRIX x, int np, int d, VECTOR I);
 extern void baricentro_asm(MATRIX x, int np, int d, VECTOR pesi, VECTOR baricentro, type* peso_tot_cur);
-extern void mov_volitivo_asm(MATRIX last_x, int np, int d, int padding_d, type stepvol, VECTOR baricentro, type direzione, VECTOR r);  // PERNA MANGIONE
+extern void mov_volitivo_asm(MATRIX x, int np, int d, int padding_d, type stepvol, VECTOR baricentro, type direzione, VECTOR r);
 
 
 // METODI DI SUPPORTO
@@ -337,26 +338,28 @@ void fss(params* input){
 	VECTOR c_per_x = alloc_matrix(1, input->np);
 
 	type mindeltaf;
+	type deltafsum;
 	type f_min;
 	int ind_f_min;
 	int ind_r = 0;
 
 	//-- calcola val_f su coordinate iniziali x e inizializza f_min e ind_f_min
-	calcola_val_f(f_cur, input);
+	calcola_val_f(f_cur, input, x_quadro, c_per_x);
 	calcola_f_min(input->np, f_cur, &f_min, &ind_f_min);
 	if(!input->silent) printf("f min iniziale = %f\n", f_min);
 	while (it < input->iter){
 		//-- calcolo nuove coordinate, deltaf, deltax, mindeltaf, --//
 		mov_individuali(input, deltaf, deltax, y, &mindeltaf, f_cur, f_y, &ind_r, x_quadro, c_per_x);
 		//-- aggiorna pesi dei pesci --//
-		if(mindeltaf < 0){
+		if(mindeltaf < 0){ // mindeltaf >= 0 nessuno si è spostato nel mov individuale
 			// alimenta(input, deltaf, pesi, &mindeltaf);
 			alimenta_asm(input->np+input->padding_np, deltaf, pesi, mindeltaf);
+		
+			//-- esegui movimento istintivo --//
+			// mov_istintivo(input, deltaf, deltax, I);
+			calcola_I_asm(deltax, input->np, input->d + input->padding_d, deltaf, I);
+			mov_istintivo_asm(input->x, input->np, input->d + input->padding_d, I);
 		}
-		//-- esegui movimento istintivo --//
-		// mov_istintivo(input, deltaf, deltax, I);
-		calcola_I_asm(deltax, input->np, input->d + input->padding_d, deltaf, I);
-		mov_istintivo_asm(input->x, input->np, input->d + input->padding_d, I);
 		//-- calcola baricentro --//
 		// calcola_baricentro(input, pesi, baricentro, &peso_tot_cur);
 		baricentro_asm(input->x, input->np, input->d+input->padding_d, pesi, baricentro, &peso_tot_cur);
@@ -367,7 +370,7 @@ void fss(params* input){
 		ind_r += input->np; // necessario solo con chiamata a mov_volitivo_asm
 		peso_tot_old = peso_tot_cur; // necessario solo con chiamata a mov_volitivo_asm
 		// &(input->x[((input->np-1)*(input->d+input->padding_d))]): corrisponde all'indirizzo dell'ultima riga di input->x
-		calcola_val_f(f_cur, input);
+		calcola_val_f(f_cur, input, x_quadro, c_per_x);
 		//-- aggiorna parametri --//
 		input->stepind = input->stepind - decadimento_ind;
 		input->stepvol = input->stepvol - decadimento_vol;
@@ -393,18 +396,7 @@ void mov_individuali(params* input, VECTOR deltaf, MATRIX deltax, MATRIX y, type
 	int indice_riga_ultimo_pesce = ((n_pesci-1)*(n_coordinate+padding_d));
 	calcola_y_asm(input->x, y, n_pesci, n_coordinate, padding_d, copy_stepind, &(input->r[*ind_r]));
 	*ind_r = *ind_r + n_pesci*n_coordinate;
-	int indirizzo_ultima_riga_ultimo_elemento = ((n_pesci-1)*(n_coordinate+padding_d)+(n_coordinate+padding_d-1));
-	calcola_f_y_asm(
-	  &(input->x[indirizzo_ultima_riga_ultimo_elemento])+1, 
-	  &(y[indirizzo_ultima_riga_ultimo_elemento])+1, 
-	  n_pesci, 
-	  n_coordinate+padding_d, 
-	  &(deltax[indirizzo_ultima_riga_ultimo_elemento])+1, 
-	  &(input->c[n_coordinate+padding_d-1])+1,
-	  &(y_quadro[n_pesci-1])+1,
-	  &(c_per_y[n_pesci-1])+1
-	);
-
+	calcola_f_y_asm(input->x, y, n_pesci, n_coordinate+padding_d, deltax, input->c, y_quadro, c_per_y);
 	for(int pesce = 0; pesce < n_pesci; pesce++){ // numero pesci
 		f_y[pesce] = exp(y_quadro[pesce]) + y_quadro[pesce] - c_per_y[pesce];
 		if(f_y[pesce] >= f_cur[pesce]){ // la posizione non è migliore
@@ -417,7 +409,7 @@ void mov_individuali(params* input, VECTOR deltaf, MATRIX deltax, MATRIX y, type
 	  		f_cur[pesce] = f_y[pesce]; // il nuovo valore del pesce
 	  	}// else
 	}//for
-	if( spostati >= n_pesci/2 ){ // sono maggiori i pesci che si sono spostati, quindi mi conviene sovrascrivere y con i pesci che non si sono spostati
+ 	if( spostati >= n_pesci/2 ){ // sono maggiori i pesci che si sono spostati, quindi mi conviene sovrascrivere y con i pesci che non si sono spostati
 		for(int pesce = 0; pesce < n_pesci; pesce++){ // se i pesci non si sono spostati deltaf = 0
 	    	if(deltaf[pesce] == 0){ // se il pesce non si è spostato (deltaf = 0)
 	        	for(int coordinata = 0; coordinata < n_coordinate; coordinata++){
@@ -440,12 +432,13 @@ void mov_individuali(params* input, VECTOR deltaf, MATRIX deltax, MATRIX y, type
 	}//else
 }//mov_individuale
 
-void calcola_val_f(VECTOR f_cur, params* input){// conviene il suo utilizzo solo nell'inizializzazione
-  int n_pesci = input->np;
-  int n_coordinate = input->d;
-  int pesce = 0;
-  int coordinata;
-  type val_f_pesce_cur;
+void calcola_val_f(VECTOR f_cur, params* input, VECTOR x_quadro, VECTOR c_per_x){// conviene il suo utilizzo solo nell'inizializzazione
+  	int n_pesci = input->np;
+	int n_coordinate = input->d;
+	int padding_d = input->padding_d;
+	int pesce = 0;
+	int coordinata;
+	type val_f_pesce_cur;
 
   calcola_f_pesce(input, pesce, &val_f_pesce_cur); // calcolo il valore della funzione del primo pesce per inizializzare i parametri  f_min e ind_f_min
   f_cur[pesce] = val_f_pesce_cur;
@@ -454,7 +447,7 @@ void calcola_val_f(VECTOR f_cur, params* input){// conviene il suo utilizzo solo
 	calcola_f_pesce(input, pesce, &val_f_pesce_cur);	
     f_cur[pesce] = val_f_pesce_cur;
   }//iterazione su tutti i pesci
-}//inizializza_val_f
+}//calcola_val_f
 
 void calcola_f_pesce(params* input, int pesce, type* ret){
 	int n_coordinate = input->d;
