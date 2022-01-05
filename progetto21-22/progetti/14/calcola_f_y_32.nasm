@@ -57,6 +57,8 @@ imul edx, dim
 mov edi, [ebp+deltax]; stesso ragionamento di x e y (anche y_2 e c_y)
 mov esi, [ebp+vector_c]; prendi ultimo elemento di c
 
+
+
 for_pesci:
 	cmp     edx, UNROLL_PESCI*dim
 	jl      for_pesce

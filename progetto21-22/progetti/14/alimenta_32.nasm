@@ -6,8 +6,9 @@ section .data
     UNROLL        	equ		4
 
 section .bss
-    alignb 16
-    m resd p
+    ; DEBUG
+    ; alignb 16
+    ; m resd p
 
 section .text
     global alimenta_asm
@@ -16,8 +17,10 @@ section .text
     delta_f     equ     12
     pesi        equ     16
     min_delta_f equ     20
-    msg	db	'ECCOCIIIII!!!!!!!!!',32,0
-    nl	db	10,0
+    
+    ; DEBUG
+    ; msg	db	'ECCOCIIIII!!!!!!!!!',32,0
+    ; nl	db	10,0
     ; prints msg
 	; prints nl
 

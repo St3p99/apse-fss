@@ -10,8 +10,9 @@ section .data
     UNROLL_COORDINATE		equ		2
 
 section .bss
-    alignb 16
-    m resd p
+    ; DEBUG
+    ; alignb 16
+    ; m resd p
 
 section .text
     global calcola_I_asm
@@ -21,7 +22,8 @@ section .text
     input_d     equ     16
     delta_f      equ     20
     vector_i  equ     24
-
+    
+    ; DEBUG
     ; msg	db	'ECCOCIIIII!!!!!!!!!',32,0
     ; nl	db	10,0
     ; prints msg

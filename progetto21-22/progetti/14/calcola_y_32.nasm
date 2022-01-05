@@ -16,8 +16,9 @@ section .data
 
 
 section .bss
-    alignb 16
-    m resd p
+    ; DEBUG
+    ; alignb 16
+    ; m resd p
 
 section .text
     global calcola_y_asm
@@ -29,8 +30,10 @@ section .text
     padding     equ     24
     stepind     equ     28 
     vector_r    equ     32
-    msg	db	'ECCOCIIIII!!!!!!!!!',32,0
-    nl	db	10,0
+    
+    ; DEBUG
+    ; msg	db	'ECCOCIIIII!!!!!!!!!',32,0
+    ; nl	db	10,0
     ; prints msg
 	; prints nl
 

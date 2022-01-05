@@ -12,8 +12,9 @@ section .data
     v_meno_uno dd -1.0, -1.0, -1.0, -1.0
 
 section .bss
-    alignb 16
-    m resd p
+    ; DEBUG
+    ; alignb 16
+    ; m resd p
 
 section .text
     global mov_volitivo_asm_omp
@@ -24,8 +25,10 @@ section .text
     baricentro  equ     20
     direzione   equ     24 ; -> xmm6
     vector_r    equ     28
-    msg	db	'ECCOCIIIII!!!!!!!!!',32,0
-    nl	db	10,0
+    
+    ; DEBUG
+    ; msg	db	'ECCOCIIIII!!!!!!!!!',32,0
+    ; nl	db	10,0
     ; prints msg
 	; prints nl
 

@@ -2,21 +2,6 @@
 
 ; CALCOLA VETTORE I (Movimento istintivo)
 
-; per ogni pesce p [p=0]
-    ; per ogni blocco da 8 coordinate
-        ; XMM0 <- primo blocco da 4 (coordinate) [x00, x01, x02, x03]
-        ; XMM1 <- secondo blocco da 4 (coordinate) [x04, x05, x06, x07]
-        ; XMM2 <- peso[p] per tutti gli elementi del registro [w0]
-        ; XMM0 <- XMM0*XMM2 [x00*w0, x01*w0, x02*w0, x03*w0]
-        ; XMM1 <- XMM1*XMM2 [x04*w0, x05*w0, x06*w0, x07*w0]
-        ; ADDPS MEM[blocco i], XMM0 [num0, num1, num2, num3]
-        ; ADDPS MEM[blocco i+1], XMM1 [num4, num5, num6, num7]
-
-;   0    1    2    3    4    5    6    7       8    9   10   11   12    13   14   15
-; [x00, x01, x02, x03, x04, x05, x06, x07] - [x10, x11, x12, x13, x14, x15, x16, x17]
-
-; Accesso alla matrice per riga [i][j] => [i*n_colonne+j]
-; Inoltre, prendiamo blocchi di 4
 
 section .data
     dim		equ		4       ; dimensione operandi float (4byte)
@@ -26,8 +11,9 @@ section .data
     UNROLL_COORDINATE		equ		2
 
 section .bss
-    alignb 16
-    m resd p
+    ; DEBUG
+    ; alignb 16
+    ; m resd p
 
 section .text
     global mov_istintivo_asm
@@ -36,9 +22,10 @@ section .text
     input_np    equ     12
     input_d     equ     16
     vector_i  equ     20
-
-    msg	db	'ECCOCIIIII!!!!!!!!!',32,0
-    nl	db	10,0
+    
+    ; DEBUG
+    ; msg	db	'ECCOCIIIII!!!!!!!!!',32,0
+    ; nl	db	10,0
     ; prints msg
 	; prints nl
 
