@@ -437,6 +437,9 @@ void calcola_val_f(VECTOR f_cur, params* input, VECTOR x_quadro, VECTOR c_per_x)
 
  	calcola_val_f_asm(input->x, n_pesci, n_coordinate_tot, input->c, x_quadro, c_per_x);
   	for(int pesce = 0; pesce < n_pesci; pesce++){ //numero pesci, ovviamente escludi il primo che hai già calcolato
+	  	// printf("ASM: x_quadro[%d] = %f\n", pesce,  x_quadro[pesce]);
+		// printf("ASM: c_per_x[%d] = %f\n", pesce, c_per_x[pesce]);
+	  	calcola_f_pesce(input, pesce, &(f_cur[pesce]));
     	f_cur[pesce] = exp(x_quadro[pesce]) + x_quadro[pesce] - c_per_x[pesce];
   	}//iterazione su tutti i pesci
 }//calcola_val_f
@@ -457,6 +460,8 @@ void calcola_f_pesce(params* input, int pesce, type* ret){
       x_quadro += (val_i*val_i);
       c_per_x += (val_i*coef_i);
     }//iterazione sulle coordinate di ogni singolo pesce
+	// printf("C: x_quadro[%d] = %f\n", pesce, x_quadro);
+	// printf("C: c_per_x[%d] = %f\n", pesce, c_per_x);
     // *ret = exp(x_quadro) + x_quadro - c_per_x;
 }
 

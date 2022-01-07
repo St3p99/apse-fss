@@ -103,10 +103,14 @@ next_2:
     haddps  XMM6,   XMM6
     haddps  XMM6,   XMM6
 
-
     movss [edi+esi*dim],    XMM4
     movss [ebx+esi*dim],    XMM6
     inc esi
+
+    xorps XMM4,XMM4
+    xorps XMM5,XMM5
+    xorps XMM6,XMM6
+    xorps XMM7,XMM7
     
     mov ecx, [ebp+vector_c]
     mov edx, [ebp+input_d]
