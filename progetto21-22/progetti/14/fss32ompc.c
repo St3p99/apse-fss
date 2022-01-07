@@ -53,7 +53,7 @@
 #define	VECTOR		type*
 
 
-#define MAX_NUM_THREADS 7
+#define MAX_NUM_THREADS 4
 
 typedef struct {
 	MATRIX x; //posizione dei pesci

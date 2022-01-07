@@ -365,7 +365,6 @@ void fss(params* input){
 		// mov_volitivo(input, baricentro, &peso_tot_old, &peso_tot_cur, &ind_r);
 		mov_volitivo_asm(input->x, input->np, input->d, input->padding_d, input->stepvol, 
 					    baricentro, (peso_tot_old < peso_tot_cur) ? -1.0 : 1.0, &(input->r[ind_r]));
-		// stampa_matrice(input, input->x, input->np, input->d);
 		ind_r += input->np; // necessario solo con chiamata a mov_volitivo_asm
 		peso_tot_old = peso_tot_cur; // necessario solo con chiamata a mov_volitivo_asm
 		// &(input->x[((input->np-1)*(input->d+input->padding_d))]): corrisponde all'indirizzo dell'ultima riga di input->x
@@ -434,19 +433,12 @@ void mov_individuali(params* input, VECTOR deltaf, MATRIX deltax, MATRIX y, type
 
 void calcola_val_f(VECTOR f_cur, params* input, VECTOR x_quadro, VECTOR c_per_x){// conviene il suo utilizzo solo nell'inizializzazione
   	int n_pesci = input->np;
-	int n_coordinate = input->d;
-	int padding_d = input->padding_d;
-	int pesce = 0;
-	int coordinata;
-	type val_f_pesce_cur;
+	int n_coordinate_tot = input->d + input->padding_d;
 
-  calcola_f_pesce(input, pesce, &val_f_pesce_cur); // calcolo il valore della funzione del primo pesce per inizializzare i parametri  f_min e ind_f_min
-  f_cur[pesce] = val_f_pesce_cur;
-
-  for(pesce = 1; pesce < n_pesci; pesce++){ //numero pesci, ovviamente escludi il primo che hai già calcolato
-	calcola_f_pesce(input, pesce, &val_f_pesce_cur);	
-    f_cur[pesce] = val_f_pesce_cur;
-  }//iterazione su tutti i pesci
+ 	calcola_val_f_asm(input->x, n_pesci, n_coordinate_tot, input->c, x_quadro, c_per_x);
+  	for(int pesce = 0; pesce < n_pesci; pesce++){ //numero pesci, ovviamente escludi il primo che hai già calcolato
+    	f_cur[pesce] = exp(x_quadro[pesce]) + x_quadro[pesce] - c_per_x[pesce];
+  	}//iterazione su tutti i pesci
 }//calcola_val_f
 
 void calcola_f_pesce(params* input, int pesce, type* ret){
@@ -465,7 +457,7 @@ void calcola_f_pesce(params* input, int pesce, type* ret){
       x_quadro += (val_i*val_i);
       c_per_x += (val_i*coef_i);
     }//iterazione sulle coordinate di ogni singolo pesce
-    *ret = exp(x_quadro) + x_quadro - c_per_x;
+    // *ret = exp(x_quadro) + x_quadro - c_per_x;
 }
 
 // MOV ISTINTIVO

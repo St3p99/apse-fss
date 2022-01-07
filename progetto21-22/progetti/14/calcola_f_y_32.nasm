@@ -91,29 +91,27 @@ for_blocco_coordinate:
 fine_blocco_coordinate:
 	cmp ecx, 0 
     je fine_coordinate
-gestione_coordinate_rimanenti:
+; gestione_coordinate_rimanenti
 	movaps xmm2, [ebx] ;y
-	add ebx, p*dim
 	movaps xmm5,xmm2 ; copia y
 
 	movaps xmm3,[eax]; x
-	add eax, p*dim
 	
 	subps xmm5,xmm3 ; y-x	
 	movaps [edi], xmm5 ; y-x -> deltax
-	add edi, p*dim
 	
 	movaps xmm4,[esi]; ci
-	add esi, p*dim
+	
 	mulps xmm4,xmm2 ; ci*yi
 	addps xmm1,xmm4 ; tengo la somma parziale al fine di calcolare c*y tot
 
 	mulps xmm2,xmm2 ; yi*yi
     addps xmm0,xmm2 ; tengo la somma parziale al fine di calcolare y^2 tot
-
-	sub ecx, p
-    cmp ecx, 0
-	jg gestione_coordinate_rimanenti
+	
+	add ebx, p*dim
+	add eax, p*dim
+	add edi, p*dim
+	add esi, p*dim
 
 fine_coordinate:
 	haddps xmm0, xmm0
@@ -182,29 +180,27 @@ for_blocco_coordinate_2:
 fine_blocco_coordinate_2:
 	cmp ecx, 0 
     je fine_coordinate_2
-gestione_coordinate_rimanenti_2:
+; gestione_coordinate_rimanenti
 	movaps xmm2, [ebx] ;y
-	add ebx,p*dim
 	movaps xmm5,xmm2 ; copia y
 
 	movaps xmm3,[eax]; x
-	add eax,p*dim
 	
-	subps xmm5,xmm3 ; y-x
+	subps xmm5,xmm3 ; y-x	
 	movaps [edi], xmm5 ; y-x -> deltax
-	add edi, p*dim
 	
 	movaps xmm4,[esi]; ci
-	add esi, p*dim 
+	
 	mulps xmm4,xmm2 ; ci*yi
 	addps xmm1,xmm4 ; tengo la somma parziale al fine di calcolare c*y tot
 
 	mulps xmm2,xmm2 ; yi*yi
     addps xmm0,xmm2 ; tengo la somma parziale al fine di calcolare y^2 tot
-
-	sub ecx, p
-    cmp ecx, 0
-	jg gestione_coordinate_rimanenti_2
+	
+	add ebx, p*dim
+	add eax, p*dim
+	add edi, p*dim
+	add esi, p*dim
 
 fine_coordinate_2:
 	haddps xmm0, xmm0
@@ -273,30 +269,27 @@ for_blocco_coordinate_3:
 fine_blocco_coordinate_3:
 	cmp ecx, 0 
     je fine_coordinate_3
-gestione_coordinate_rimanenti_3:
+; gestione_coordinate_rimanenti
 	movaps xmm2, [ebx] ;y
-	add ebx,p*dim
 	movaps xmm5,xmm2 ; copia y
 
 	movaps xmm3,[eax]; x
-	add eax,p*dim
 	
-	subps xmm5,xmm3 ; y-x
+	subps xmm5,xmm3 ; y-x	
 	movaps [edi], xmm5 ; y-x -> deltax
-	add edi, p*dim
 	
 	movaps xmm4,[esi]; ci
-	add esi, p*dim 
+	
 	mulps xmm4,xmm2 ; ci*yi
 	addps xmm1,xmm4 ; tengo la somma parziale al fine di calcolare c*y tot
 
 	mulps xmm2,xmm2 ; yi*yi
     addps xmm0,xmm2 ; tengo la somma parziale al fine di calcolare y^2 tot
-
-	sub ecx, p
-    cmp ecx, 0
-	jg gestione_coordinate_rimanenti_3
-
+	
+	add ebx, p*dim
+	add eax, p*dim
+	add edi, p*dim
+	add esi, p*dim
 fine_coordinate_3:
 	haddps xmm0, xmm0
 	haddps xmm0, xmm0 ; y^2 tot
@@ -364,29 +357,27 @@ for_blocco_coordinate_4:
 fine_blocco_coordinate_4:
 	cmp ecx, 0 
     je fine_coordinate_4
-gestione_coordinate_rimanenti_4:
+; gestione_coordinate_rimanenti
 	movaps xmm2, [ebx] ;y
-	add ebx,p*dim
 	movaps xmm5,xmm2 ; copia y
 
 	movaps xmm3,[eax]; x
-	add eax,p*dim
 	
-	subps xmm5,xmm3 ; y-x
+	subps xmm5,xmm3 ; y-x	
 	movaps [edi], xmm5 ; y-x -> deltax
-	add edi, p*dim
 	
 	movaps xmm4,[esi]; ci
-	add esi, p*dim 
+	
 	mulps xmm4,xmm2 ; ci*yi
 	addps xmm1,xmm4 ; tengo la somma parziale al fine di calcolare c*y tot
 
 	mulps xmm2,xmm2 ; yi*yi
     addps xmm0,xmm2 ; tengo la somma parziale al fine di calcolare y^2 tot
-
-	sub ecx, p
-    cmp ecx, 0
-	jg gestione_coordinate_rimanenti_4
+	
+	add ebx, p*dim
+	add eax, p*dim
+	add edi, p*dim
+	add esi, p*dim
 fine_coordinate_4:
 	haddps xmm0, xmm0
 	haddps xmm0, xmm0 ; y^2 tot
@@ -459,28 +450,27 @@ for_blocco_coordinate_end:
 fine_blocco_coordinate_end:
 	cmp ecx, 0 
     je fine_coordinate_end
-gestione_coordinate_rimanenti_end:
+; gestione_coordinate_rimanenti
 	movaps xmm2, [ebx] ;y
-	movaps xmm5, xmm2 ; copia y
+	movaps xmm5,xmm2 ; copia y
 
 	movaps xmm3,[eax]; x
-	add eax, p*dim
 	
-	subps xmm5,xmm3 ; y-x
+	subps xmm5,xmm3 ; y-x	
 	movaps [edi], xmm5 ; y-x -> deltax
-	add edi, p*dim
 	
 	movaps xmm4,[esi]; ci
-	add esi, p*dim
+	
 	mulps xmm4,xmm2 ; ci*yi
 	addps xmm1,xmm4 ; tengo la somma parziale al fine di calcolare c*y tot
 
 	mulps xmm2,xmm2 ; yi*yi
     addps xmm0,xmm2 ; tengo la somma parziale al fine di calcolare y^2 tot
-
-	sub ecx, p
-    cmp ecx, 0
-	jg gestione_coordinate_rimanenti_end
+	
+	add ebx, p*dim
+	add eax, p*dim
+	add edi, p*dim
+	add esi, p*dim
 fine_coordinate_end:
 	haddps xmm0, xmm0
 	haddps xmm0, xmm0 ; y^2 tot
