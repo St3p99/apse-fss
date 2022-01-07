@@ -230,7 +230,7 @@ void save_data(char* filename, void* X, int n, int k) {
 		fwrite(&n, 4, 1, fp);
 		for (i = 0; i < n; i++) {
 			fwrite(X, sizeof(type), k, fp);
-			//printf("%i %i\n", ((int*)X)[0], ((int*)X)[1]);
+			// printf("%i %i\n", ((int*)X)[0], ((int*)X)[1]);
 			X += sizeof(type)*k;
 		}
 	}
@@ -269,16 +269,16 @@ void stampa_coordinate(params* input){
 	}
 }
 
-void stampa_matrice(params* input, MATRIX m){
-	if(input->silent) return;
-	for(int pesce = 0; pesce < input->np; pesce++){ //numero pesci
-		printf("m[%d] = [", pesce);	  
-		for(int coordinata = 0; coordinata < input->d - 1; coordinata++){ // coordinate pesce
-      		type val_coordinata = m[(input->d+input->padding_d)*(pesce)+coordinata];
+void stampa_matrice(params* input, MATRIX m, int r, int c){
+	// if(input->silent) return;
+	for(int i = 0; i < r; i++){ //numero pesci
+		printf("m[%d] = [", i);	  
+		for(int coordinata = 0; coordinata < c - 1; coordinata++){ // coordinate pesce
+      		type val_coordinata = m[(c+input->padding_d)*(i)+coordinata];
 			printf(" %f, ", val_coordinata);	  
 		}
-		type val_coordinata = m[(input->d+input->padding_d)*(pesce)];
-		printf(" %f]\n", m[(input->d+input->padding_d)*(pesce) + input->d - 1]);	  
+		type val_coordinata = m[(c+input->padding_d)*(i)];
+		printf(" %f]\n", m[(c+input->padding_d)*(i) + c - 1]);	  
 	}
 }
 
@@ -342,7 +342,6 @@ void fss(params* input){
 	type f_min;
 	int ind_f_min;
 	int ind_r = 0;
-
 	//-- calcola val_f su coordinate iniziali x e inizializza f_min e ind_f_min
 	calcola_val_f(f_cur, input, x_quadro, c_per_x);
 	calcola_f_min(input->np, f_cur, &f_min, &ind_f_min);
@@ -354,7 +353,6 @@ void fss(params* input){
 		if(mindeltaf < 0){ // mindeltaf >= 0 nessuno si è spostato nel mov individuale
 			// alimenta(input, deltaf, pesi, &mindeltaf);
 			alimenta_asm(input->np+input->padding_np, deltaf, pesi, mindeltaf);
-		
 			//-- esegui movimento istintivo --//
 			// mov_istintivo(input, deltaf, deltax, I);
 			calcola_I_asm(deltax, input->np, input->d + input->padding_d, deltaf, I);
@@ -367,6 +365,7 @@ void fss(params* input){
 		// mov_volitivo(input, baricentro, &peso_tot_old, &peso_tot_cur, &ind_r);
 		mov_volitivo_asm(input->x, input->np, input->d, input->padding_d, input->stepvol, 
 					    baricentro, (peso_tot_old < peso_tot_cur) ? -1.0 : 1.0, &(input->r[ind_r]));
+		// stampa_matrice(input, input->x, input->np, input->d);
 		ind_r += input->np; // necessario solo con chiamata a mov_volitivo_asm
 		peso_tot_old = peso_tot_cur; // necessario solo con chiamata a mov_volitivo_asm
 		// &(input->x[((input->np-1)*(input->d+input->padding_d))]): corrisponde all'indirizzo dell'ultima riga di input->x
@@ -378,8 +377,11 @@ void fss(params* input){
 	}
 	calcola_f_min(input->np, f_cur, &f_min, &ind_f_min);
 	//------- RETURN POS MIN ---------------
-	// xh punta all'inizio della riga
-	input->xh = &input->x[ind_f_min*(input->d+input->padding_d)];
+	// xh punta all'inizio della riga ind_f_min
+	// input->xh = &input->x[ind_f_min*(input->d+input->padding_d)];
+	input->xh = alloc_matrix(1, input->d);
+	for(int j = 0; j < input->d; j++)
+		input->xh[j] = input->x[ind_f_min*(input->d+input->padding_d)+j];
 	if(!input->silent) printf("f_min = %f\n", f_min);
 }
 
@@ -392,13 +394,11 @@ void mov_individuali(params* input, VECTOR deltaf, MATRIX deltax, MATRIX y, type
 	*mindeltaf = 1; // inizializzazione fittizia
 	type copy_stepind = input->stepind;	
 	int spostati = 0; // conta il numero di pesci spostati;
-	type rand;
-	int indice_riga_ultimo_pesce = ((n_pesci-1)*(n_coordinate+padding_d));
 	calcola_y_asm(input->x, y, n_pesci, n_coordinate, padding_d, copy_stepind, &(input->r[*ind_r]));
 	*ind_r = *ind_r + n_pesci*n_coordinate;
 	calcola_f_y_asm(input->x, y, n_pesci, n_coordinate+padding_d, deltax, input->c, y_quadro, c_per_y);
 	for(int pesce = 0; pesce < n_pesci; pesce++){ // numero pesci
-		f_y[pesce] = exp(y_quadro[pesce]) + y_quadro[pesce] - c_per_y[pesce];
+	    f_y[pesce] = exp(y_quadro[pesce]) + y_quadro[pesce] - c_per_y[pesce];
 		if(f_y[pesce] >= f_cur[pesce]){ // la posizione non è migliore
 			deltaf[pesce] = 0.0; 
 	  	}  // se il pesce non migliora non viene spostato

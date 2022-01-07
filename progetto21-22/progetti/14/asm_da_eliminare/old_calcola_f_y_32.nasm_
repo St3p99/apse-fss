@@ -10,7 +10,7 @@ section .data
 
 section .bss
     alignb 16
-	np_meno_unroll resd 1
+    m resd p
 
 section .text
     global calcola_f_y_asm
@@ -34,31 +34,35 @@ calcola_f_y_asm:
 mov eax, [ebp+input_x]; mi serve indirizzo ultima coordinata ultimo pesce +4
 mov ebx, [ebp+matrix_y]; mi serve ultima coordinata ultimo pesce
 mov ecx, [ebp+d_piu_padding] ; d+padding
+mov edx, [ebp+np]
+imul edx, dim
 mov edi, [ebp+deltax]; stesso ragionamento di x e y (anche y_2 e c_y)
 mov esi, [ebp+vector_c]; prendi ultimo elemento di c
 
-mov edx, [ebp+np]
-sub edx, UNROLL_PESCI
-mov [np_meno_unroll], edx
-xor edx, edx
-for_pesci:
-	cmp     edx, [np_meno_unroll] 
-	jg      for_pesce
 
+
+for_pesci:
+	cmp     edx, UNROLL_PESCI*dim
+	jl      for_pesce
+	
 	xorps xmm0, xmm0 ; azzerando xmm3 per mantenere la somma parziale di x2
 	xorps xmm1, xmm1 ; azzerando xmm3 per mantenere la somma parziale di c_per_x
 for_blocco_coordinate:
 	cmp ecx, p*UNROLL_COORDINATE ; se uguale a 0 salta  
 	jl fine_blocco_coordinate
 
+    sub ebx, p*dim
 	movaps xmm2, [ebx] ;y
-	movaps xmm5, xmm2 ; copia y
+	movaps xmm5,xmm2 ; copia y
 
+	sub eax, p*dim
 	movaps xmm3,[eax]; x
 
-	subps xmm5, xmm3 ; y-x
+	subps xmm5,xmm3 ; y-x
+	sub edi, p*dim
 	movaps [edi], xmm5 ; y-x -> deltax
 	
+	sub esi, p*dim
 	movaps xmm4, [esi]; ci
 
 	mulps xmm4,xmm2 ; ci*yi
@@ -67,19 +71,19 @@ for_blocco_coordinate:
 	mulps xmm2,xmm2 ; yi*yi
     addps xmm0,xmm2 ; tengo la somma parziale al fine di calcolare y^2 tot
 	;--
-	movaps xmm6, [ebx+p*dim] ;y
-	add ebx, p*dim*UNROLL_COORDINATE
-	movaps xmm5, xmm6 ; copia y
+	sub ebx, p*dim
+	movaps xmm6, [ebx] ;y
+	movaps xmm5,xmm6 ; copia y
 
-	movaps xmm7, [eax+p*dim]; x
-	add eax, p*dim*UNROLL_COORDINATE
+	sub eax, p*dim
+	movaps xmm7,[eax]; x
 	
 	subps xmm5,xmm7 ; y-x
-	movaps [edi+p*dim], xmm5 ; y-x -> deltax
-	add edi, p*dim*UNROLL_COORDINATE
+	sub edi, p*dim
+	movaps [edi], xmm5 ; y-x -> deltax
 	
-	movaps xmm4,[esi+p*dim]; ci
-	add esi, p*dim*UNROLL_COORDINATE
+	sub esi, p*dim
+	movaps xmm4,[esi]; ci
 	mulps xmm4,xmm6 ; ci*yi
 	addps xmm1,xmm4 ; tengo la somma parziale al fine di calcolare c*y tot
 
@@ -90,21 +94,21 @@ for_blocco_coordinate:
 	jmp for_blocco_coordinate
 fine_blocco_coordinate:
 	cmp ecx, 0 
-    je fine_coordinate
+        je fine_coordinate
 gestione_coordinate_rimanenti:
+	sub ebx, p*dim
 	movaps xmm2, [ebx] ;y
-	add ebx, p*dim
 	movaps xmm5,xmm2 ; copia y
 
+	sub eax, p*dim
 	movaps xmm3,[eax]; x
-	add eax, p*dim
 	
-	subps xmm5,xmm3 ; y-x	
+	subps xmm5,xmm3 ; y-x
+	sub edi, p*dim
 	movaps [edi], xmm5 ; y-x -> deltax
-	add edi, p*dim
 	
+	sub esi, p*dim
 	movaps xmm4,[esi]; ci
-	add esi, p*dim
 	mulps xmm4,xmm2 ; ci*yi
 	addps xmm1,xmm4 ; tengo la somma parziale al fine di calcolare c*y tot
 
@@ -118,266 +122,274 @@ gestione_coordinate_rimanenti:
 fine_coordinate:
 	haddps xmm0, xmm0
 	haddps xmm0, xmm0 ; y^2 tot
-	 
-	; mov ecx , [ebp+np]
-	; imul ecx, dim
-	; sub ecx, edx
-
-	mov esi, [ebp+y_2]
-	movss [esi+edx*dim], xmm0 ; rivedere solo qui indicizzazione
 	
-	haddps xmm1,xmm1
-	haddps xmm1,xmm1
+	mov ecx, [ebp+y_2]
+	sub ecx, dim
+	movss [ecx], xmm0 ; rivedere solo qui indicizzazione
+	mov [ebp+y_2], ecx
 
-	mov esi, [ebp+c_y]
-	movss [esi+edx*dim],xmm1
+	haddps xmm1,xmm1
+	haddps xmm1,xmm1
+	mov ecx, [ebp+c_y]
+    sub ecx, dim
+	movss [ecx],xmm1
+	mov [ebp+c_y], ecx
 
 	mov ecx, [ebp+d_piu_padding]
 	mov esi, [ebp+vector_c]
-	inc edx
+	sub edx, dim
 
 	xorps xmm0, xmm0
 	xorps xmm1, xmm1
 for_blocco_coordinate_2:
-	cmp ecx, p*UNROLL_COORDINATE ; se uguale a 0 salta  
+	cmp ecx, 8 ; se uguale a 0 salta  
 	jl fine_blocco_coordinate_2
 
+	sub ebx,p*dim
 	movaps xmm2, [ebx] ;y
-	movaps xmm5, xmm2 ; copia y
+	movaps xmm5,xmm2 ; copia y
 
+	sub eax,p*dim
 	movaps xmm3,[eax]; x
-
-	subps xmm5, xmm3 ; y-x
+	
+	subps xmm5,xmm3 ; y-x
+	sub edi, p*dim
 	movaps [edi], xmm5 ; y-x -> deltax
 	
-	movaps xmm4, [esi]; ci
-
+	sub esi, p*dim 
+	movaps xmm4,[esi]; ci
 	mulps xmm4,xmm2 ; ci*yi
 	addps xmm1,xmm4 ; tengo la somma parziale al fine di calcolare c*y tot
 
 	mulps xmm2,xmm2 ; yi*yi
-    addps xmm0,xmm2 ; tengo la somma parziale al fine di calcolare y^2 tot
-	;--
-	movaps xmm6, [ebx+p*dim] ;y
-	add ebx, p*dim*UNROLL_COORDINATE
-	movaps xmm5, xmm6 ; copia y
+        addps xmm0,xmm2 ; tengo la somma parziale al fine di calcolare y^2 tot
+	
+	sub ebx,p*dim
+	movaps xmm6, [ebx] ;y
+	movaps xmm5,xmm6 ; copia y
 
-	movaps xmm7, [eax+p*dim]; x
-	add eax, p*dim*UNROLL_COORDINATE
+	sub eax,p*dim
+	movaps xmm7,[eax]; x
 	
 	subps xmm5,xmm7 ; y-x
-	movaps [edi+p*dim], xmm5 ; y-x -> deltax
-	add edi, p*dim*UNROLL_COORDINATE
+	sub edi, p*dim
+	movaps [edi], xmm5 ; y-x -> deltax
 	
-	movaps xmm4,[esi+p*dim]; ci
-	add esi, p*dim*UNROLL_COORDINATE
+	sub esi, p*dim 
+	movaps xmm4,[esi]; ci
 	mulps xmm4,xmm6 ; ci*yi
 	addps xmm1,xmm4 ; tengo la somma parziale al fine di calcolare c*y tot
 
 	mulps xmm6,xmm6 ; yi*yi
-    addps xmm0,xmm6 ; tengo la somma parziale al fine di calcolare y^2 tot
+        addps xmm0,xmm6 ; tengo la somma parziale al fine di calcolare y^2 tot
 	
 	sub ecx, p*UNROLL_COORDINATE
     jmp for_blocco_coordinate_2
 fine_blocco_coordinate_2:
 	cmp ecx, 0 
-    je fine_coordinate_2
+        je fine_coordinate_2
 gestione_coordinate_rimanenti_2:
+	sub ebx,p*dim
 	movaps xmm2, [ebx] ;y
-	add ebx,p*dim
 	movaps xmm5,xmm2 ; copia y
 
+	sub eax,p*dim
 	movaps xmm3,[eax]; x
-	add eax,p*dim
 	
 	subps xmm5,xmm3 ; y-x
+	sub edi, p*dim
 	movaps [edi], xmm5 ; y-x -> deltax
-	add edi, p*dim
 	
+	sub esi, p*dim 
 	movaps xmm4,[esi]; ci
-	add esi, p*dim 
 	mulps xmm4,xmm2 ; ci*yi
 	addps xmm1,xmm4 ; tengo la somma parziale al fine di calcolare c*y tot
 
 	mulps xmm2,xmm2 ; yi*yi
-    addps xmm0,xmm2 ; tengo la somma parziale al fine di calcolare y^2 tot
+        addps xmm0,xmm2 ; tengo la somma parziale al fine di calcolare y^2 tot
 
 	sub ecx, p
     cmp ecx, 0
 	jg gestione_coordinate_rimanenti_2
 
 fine_coordinate_2:
-	haddps xmm0, xmm0
-	haddps xmm0, xmm0 ; y^2 tot
-	 
-	; mov ecx , [ebp+np]
-	; imul ecx, dim
-	; sub ecx, edx
-
-	mov esi,[ebp+y_2]
-	movss [esi+edx*dim], xmm0 ; rivedere solo qui indicizzazione
+	haddps xmm0,xmm0
+	haddps xmm0,xmm0 ; y^2 tot
 	
+	mov ecx, [ebp+y_2]
+    sub ecx, dim
+	movss [ecx],xmm0
+	mov [ebp+y_2], ecx ; rivedere solo qui indicizzazione
+
 	haddps xmm1,xmm1
 	haddps xmm1,xmm1
+	mov ecx, [ebp+c_y]
+    sub ecx, dim
+	movss [ecx],xmm1
+	mov [ebp+c_y], ecx
 
-	mov esi, [ebp+c_y]
-	movss [esi+edx*dim],xmm1
-
-	mov ecx, [ebp+d_piu_padding]
+	mov ecx,[ebp+d_piu_padding]
 	mov esi, [ebp+vector_c]
-	inc edx
+	sub edx, dim
 
 	xorps xmm0, xmm0
 	xorps xmm1, xmm1
 for_blocco_coordinate_3:
-	cmp ecx, p*UNROLL_COORDINATE ; se uguale a 0 salta  
+	cmp ecx, 8 ; se uguale a 0 salta  
 	jl fine_blocco_coordinate_3
 
+	sub ebx,p*dim
 	movaps xmm2, [ebx] ;y
-	movaps xmm5, xmm2 ; copia y
+	movaps xmm5,xmm2 ; copia y
 
+	sub eax,p*dim
 	movaps xmm3,[eax]; x
-
-	subps xmm5, xmm3 ; y-x
+	
+	subps xmm5,xmm3 ; y-x
+	sub edi, p*dim
 	movaps [edi], xmm5 ; y-x -> deltax
 	
-	movaps xmm4, [esi]; ci
-
+	sub esi, p*dim 
+	movaps xmm4,[esi]; ci
 	mulps xmm4,xmm2 ; ci*yi
 	addps xmm1,xmm4 ; tengo la somma parziale al fine di calcolare c*y tot
 
 	mulps xmm2,xmm2 ; yi*yi
-    addps xmm0,xmm2 ; tengo la somma parziale al fine di calcolare y^2 tot
-	;--
-	movaps xmm6, [ebx+p*dim] ;y
-	add ebx, p*dim*UNROLL_COORDINATE
-	movaps xmm5, xmm6 ; copia y
+        addps xmm0,xmm2 ; tengo la somma parziale al fine di calcolare y^2 tot
+	
+	sub ebx,p*dim
+	movaps xmm6, [ebx] ;y
+	movaps xmm5,xmm6 ; copia y
 
-	movaps xmm7, [eax+p*dim]; x
-	add eax, p*dim*UNROLL_COORDINATE
+	sub eax,p*dim
+	movaps xmm7,[eax]; x
 	
 	subps xmm5,xmm7 ; y-x
-	movaps [edi+p*dim], xmm5 ; y-x -> deltax
-	add edi, p*dim*UNROLL_COORDINATE
+	sub edi, p*dim
+	movaps [edi], xmm5 ; y-x -> deltax
 	
-	movaps xmm4,[esi+p*dim]; ci
-	add esi, p*dim*UNROLL_COORDINATE
+	sub esi, p*dim 
+	movaps xmm4,[esi]; ci
 	mulps xmm4,xmm6 ; ci*yi
 	addps xmm1,xmm4 ; tengo la somma parziale al fine di calcolare c*y tot
 
 	mulps xmm6,xmm6 ; yi*yi
-    addps xmm0,xmm6 ; tengo la somma parziale al fine di calcolare y^2 tot
+        addps xmm0,xmm6 ; tengo la somma parziale al fine di calcolare y^2 tot
 	
 	sub ecx, p*UNROLL_COORDINATE
     jmp for_blocco_coordinate_3
 fine_blocco_coordinate_3:
 	cmp ecx, 0 
-    je fine_coordinate_3
+        je fine_coordinate_3
 gestione_coordinate_rimanenti_3:
+	
+	sub ebx,p*dim
 	movaps xmm2, [ebx] ;y
-	add ebx,p*dim
 	movaps xmm5,xmm2 ; copia y
 
+	sub eax,p*dim
 	movaps xmm3,[eax]; x
-	add eax,p*dim
 	
 	subps xmm5,xmm3 ; y-x
+	sub edi, p*dim
 	movaps [edi], xmm5 ; y-x -> deltax
-	add edi, p*dim
 	
+	sub esi, p*dim 
 	movaps xmm4,[esi]; ci
-	add esi, p*dim 
 	mulps xmm4,xmm2 ; ci*yi
 	addps xmm1,xmm4 ; tengo la somma parziale al fine di calcolare c*y tot
 
 	mulps xmm2,xmm2 ; yi*yi
-    addps xmm0,xmm2 ; tengo la somma parziale al fine di calcolare y^2 tot
+        addps xmm0,xmm2 ; tengo la somma parziale al fine di calcolare y^2 tot
 
 	sub ecx, p
     cmp ecx, 0
 	jg gestione_coordinate_rimanenti_3
 
 fine_coordinate_3:
-	haddps xmm0, xmm0
-	haddps xmm0, xmm0 ; y^2 tot
-	 
-	; mov ecx , [ebp+np]
-	; imul ecx, dim
-	; sub ecx, edx
-
-	mov esi,[ebp+y_2]
-	movss [esi+edx*dim], xmm0 ; rivedere solo qui indicizzazione
+	haddps xmm0,xmm0
+	haddps xmm0,xmm0 ; y^2 tot
 	
+	mov ecx, [ebp+y_2]
+    sub ecx, dim
+	movss [ecx],xmm0
+mov [ebp+y_2], ecx ; rivedere solo qui indicizzazione
+
 	haddps xmm1,xmm1
 	haddps xmm1,xmm1
+	mov ecx, [ebp+c_y]
+    sub ecx, dim
+	movss [ecx],xmm1
+mov [ebp+c_y], ecx
 
-	mov esi, [ebp+c_y]
-	movss [esi+edx*dim],xmm1
-
-	mov ecx, [ebp+d_piu_padding]
+	mov ecx,[ebp+d_piu_padding]
 	mov esi, [ebp+vector_c]
-	inc edx
+	sub edx, dim
 
 	xorps xmm0, xmm0
 	xorps xmm1, xmm1
 for_blocco_coordinate_4:
-	cmp ecx, p*UNROLL_COORDINATE ; se uguale a 0 salta  
+	cmp ecx, 8 ; se uguale a 0 salta  
 	jl fine_blocco_coordinate_4
 
+	sub ebx,p*dim
 	movaps xmm2, [ebx] ;y
-	movaps xmm5, xmm2 ; copia y
+	movaps xmm5,xmm2 ; copia y
 
+	sub eax,p*dim
 	movaps xmm3,[eax]; x
-
-	subps xmm5, xmm3 ; y-x
+	
+	subps xmm5,xmm3 ; y-x
+	sub edi, p*dim
 	movaps [edi], xmm5 ; y-x -> deltax
 	
-	movaps xmm4, [esi]; ci
-
+	sub esi, p*dim 
+	movaps xmm4,[esi]; ci
 	mulps xmm4,xmm2 ; ci*yi
 	addps xmm1,xmm4 ; tengo la somma parziale al fine di calcolare c*y tot
 
 	mulps xmm2,xmm2 ; yi*yi
     addps xmm0,xmm2 ; tengo la somma parziale al fine di calcolare y^2 tot
-	;--
-	movaps xmm6, [ebx+p*dim] ;y
-	add ebx, p*dim*UNROLL_COORDINATE
-	movaps xmm5, xmm6 ; copia y
+	
+	sub ebx,p*dim
+	movaps xmm6, [ebx] ;y
+	movaps xmm5,xmm6 ; copia y
 
-	movaps xmm7, [eax+p*dim]; x
-	add eax, p*dim*UNROLL_COORDINATE
+	sub eax,p*dim
+	movaps xmm7,[eax]; x
 	
 	subps xmm5,xmm7 ; y-x
-	movaps [edi+p*dim], xmm5 ; y-x -> deltax
-	add edi, p*dim*UNROLL_COORDINATE
+	sub edi, p*dim
+	movaps [edi], xmm5 ; y-x -> deltax
 	
-	movaps xmm4,[esi+p*dim]; ci
-	add esi, p*dim*UNROLL_COORDINATE
+	sub esi, p*dim 
+	movaps xmm4,[esi]; ci
 	mulps xmm4,xmm6 ; ci*yi
 	addps xmm1,xmm4 ; tengo la somma parziale al fine di calcolare c*y tot
 
 	mulps xmm6,xmm6 ; yi*yi
-    addps xmm0,xmm6 ; tengo la somma parziale al fine di calcolare y^2 tot
+        addps xmm0,xmm6 ; tengo la somma parziale al fine di calcolare y^2 tot
 	
 	sub ecx, p*UNROLL_COORDINATE
     jmp for_blocco_coordinate_4
 fine_blocco_coordinate_4:
 	cmp ecx, 0 
-    je fine_coordinate_4
+        je fine_coordinate_4
 gestione_coordinate_rimanenti_4:
+	
+	sub ebx,p*dim
 	movaps xmm2, [ebx] ;y
-	add ebx,p*dim
 	movaps xmm5,xmm2 ; copia y
 
+	sub eax,p*dim
 	movaps xmm3,[eax]; x
-	add eax,p*dim
 	
 	subps xmm5,xmm3 ; y-x
+	sub edi, p*dim
 	movaps [edi], xmm5 ; y-x -> deltax
-	add edi, p*dim
 	
+	sub esi, p*dim 
 	movaps xmm4,[esi]; ci
-	add esi, p*dim 
 	mulps xmm4,xmm2 ; ci*yi
 	addps xmm1,xmm4 ; tengo la somma parziale al fine di calcolare c*y tot
 
@@ -388,45 +400,49 @@ gestione_coordinate_rimanenti_4:
     cmp ecx, 0
 	jg gestione_coordinate_rimanenti_4
 fine_coordinate_4:
-	haddps xmm0, xmm0
-	haddps xmm0, xmm0 ; y^2 tot
-	 
-	; mov ecx , [ebp+np]
-	; imul ecx, dim
-	; sub ecx, edx
-
-	mov esi,[ebp+y_2]
-	movss [esi+edx*dim], xmm0 ; rivedere solo qui indicizzazione
+	haddps xmm0,xmm0
+	haddps xmm0,xmm0 ; y^2 tot
 	
+	mov ecx, [ebp+y_2]
+    sub ecx, dim
+	movss [ecx], xmm0 ; rivedere solo qui indicizzazione
+	mov [ebp+y_2], ecx
+
 	haddps xmm1,xmm1
 	haddps xmm1,xmm1
+	mov ecx, [ebp+c_y]
+    sub ecx, dim
+	movss [ecx],xmm1
+	mov [ebp+c_y], ecx
 
-	mov esi, [ebp+c_y]
-	movss [esi+edx*dim],xmm1
-
-	mov ecx, [ebp+d_piu_padding]
+	mov ecx,[ebp+d_piu_padding]
 	mov esi, [ebp+vector_c]
-	inc edx
+	sub edx, dim
 	jmp for_pesci
+
 ;;;;;;;; gestione singolo pesce ne restano  da 3 a 1
 for_pesce:
-	cmp     edx, [ebp+np]  ; 
-	jge     fine_for_pesce
-
+	cmp     edx, 0  ; 
+	je      fine_for_pesce
+	
 	xorps xmm0, xmm0 ; azzerando xmm3 per mantenere la somma parziale di x2
 	xorps xmm1, xmm1 ; azzerando xmm3 per mantenere la somma parziale di c_per_x
 for_blocco_coordinate_end:
 	cmp ecx, p*UNROLL_COORDINATE ; se uguale a 0 salta  
 	jl fine_blocco_coordinate_end
 
+    sub ebx, p*dim
 	movaps xmm2, [ebx] ;y
-	movaps xmm5, xmm2 ; copia y
+	movaps xmm5,xmm2 ; copia y
 
+	sub eax, p*dim
 	movaps xmm3,[eax]; x
 
-	subps xmm5, xmm3 ; y-x
+	subps xmm5,xmm3 ; y-x
+	sub edi, p*dim
 	movaps [edi], xmm5 ; y-x -> deltax
 	
+	sub esi, p*dim
 	movaps xmm4, [esi]; ci
 
 	mulps xmm4,xmm2 ; ci*yi
@@ -435,19 +451,19 @@ for_blocco_coordinate_end:
 	mulps xmm2,xmm2 ; yi*yi
     addps xmm0,xmm2 ; tengo la somma parziale al fine di calcolare y^2 tot
 	;--
-	movaps xmm6, [ebx+p*dim] ;y
-	add ebx, p*dim*UNROLL_COORDINATE
-	movaps xmm5, xmm6 ; copia y
+	sub ebx, p*dim
+	movaps xmm6, [ebx] ;y
+	movaps xmm5,xmm6 ; copia y
 
-	movaps xmm7, [eax+p*dim]; x
-	add eax, p*dim*UNROLL_COORDINATE
+	sub eax, p*dim
+	movaps xmm7,[eax]; x
 	
 	subps xmm5,xmm7 ; y-x
-	movaps [edi+p*dim], xmm5 ; y-x -> deltax
-	add edi, p*dim*UNROLL_COORDINATE
+	sub edi, p*dim
+	movaps [edi], xmm5 ; y-x -> deltax
 	
-	movaps xmm4,[esi+p*dim]; ci
-	add esi, p*dim*UNROLL_COORDINATE
+	sub esi, p*dim
+	movaps xmm4,[esi]; ci
 	mulps xmm4,xmm6 ; ci*yi
 	addps xmm1,xmm4 ; tengo la somma parziale al fine di calcolare c*y tot
 
@@ -461,17 +477,17 @@ fine_blocco_coordinate_end:
     je fine_coordinate_end
 gestione_coordinate_rimanenti_end:
 	movaps xmm2, [ebx] ;y
-	movaps xmm5, xmm2 ; copia y
+	movaps xmm5,xmm2 ; copia y
 
+	sub eax, p*dim
 	movaps xmm3,[eax]; x
-	add eax, p*dim
 	
 	subps xmm5,xmm3 ; y-x
+	sub edi, p*dim
 	movaps [edi], xmm5 ; y-x -> deltax
-	add edi, p*dim
 	
+	sub esi, p*dim
 	movaps xmm4,[esi]; ci
-	add esi, p*dim
 	mulps xmm4,xmm2 ; ci*yi
 	addps xmm1,xmm4 ; tengo la somma parziale al fine di calcolare c*y tot
 
@@ -482,25 +498,25 @@ gestione_coordinate_rimanenti_end:
     cmp ecx, 0
 	jg gestione_coordinate_rimanenti_end
 fine_coordinate_end:
-	haddps xmm0, xmm0
-	haddps xmm0, xmm0 ; y^2 tot
-	 
-	; mov ecx , [ebp+np]
-	; imul ecx, dim
-	; sub ecx, edx
-
-	mov esi,[ebp+y_2]
-	movss [esi+edx*dim], xmm0 ; rivedere solo qui indicizzazione
+	haddps xmm0,xmm0
+	haddps xmm0,xmm0 ; y^2 tot
 	
+	mov ecx, [ebp+y_2]
+    sub ecx, dim
+	movss [ecx],xmm0
+	mov [ebp+y_2], ecx ; rivedere solo qui indicizzazione
+
 	haddps xmm1,xmm1
 	haddps xmm1,xmm1
+	mov ecx, [ebp+c_y]
+    sub ecx, dim
+	movss [ecx],xmm1
+	mov [ebp+c_y], ecx
 
-	mov esi, [ebp+c_y]
-	movss [esi+edx*dim],xmm1
-
-	mov ecx, [ebp+d_piu_padding]
+	mov ecx,[ebp+d_piu_padding]
 	mov esi, [ebp+vector_c]
-	inc edx
+
+	sub edx, dim
 	jmp for_pesce
 fine_for_pesce:
 

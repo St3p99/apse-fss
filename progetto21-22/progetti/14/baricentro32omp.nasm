@@ -15,7 +15,7 @@ section .bss
     ; m resd p
 
 section .text
-    global baricentro_asm
+    global baricentro_asm_omp
 
     input_x     equ     8
     input_np    equ     12
@@ -30,7 +30,7 @@ section .text
     ; prints msg
 	; prints nl
 
-baricentro_asm: 
+baricentro_asm_omp: 
     start
 
     mov eax, [ebp+input_x]	; indirizzo matrice x
@@ -103,6 +103,7 @@ for_blocco_coordinate:
         movaps [esi+ecx-p*dim], xmm4
 
         add     ecx,    p*dim*UNROLL_COORDINATE
+
         jmp     for_blocco_coordinate
 fine_for_blocco_coordinate:
     sub ecx, p*dim*UNROLL_COORDINATE

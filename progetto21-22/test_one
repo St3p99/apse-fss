@@ -8,8 +8,15 @@ v_si=( 0.1 0.006 0.003 );
 v_sv=( 0.0125 0.0008 0.0004 );
 v_w=( 1.25 0.08 0.04 );
 
+# dims=(256 );
+# nps=( 768 );
+# its=( 1250 );
+# v_si=( 0.003 );
+# v_sv=(0.0004 );
+# v_w=( 0.04 );
+
 # archs=( 32 64 32omp 64omp );
-archs=( 32 );
+archs=( 32 32omp );
 
 #np:  64 d:   8 si:   0.1 sv: 0.0125 w: 1.25 iters:  250
 #np: 735 d: 125 si: 0.006 sv: 0.0008 w: 0.08 iters:  750
@@ -154,7 +161,7 @@ for g in $groups; do
 		sv=${v_sv[$i]};
 		w=${v_w[$i]};
 		j=0;
-		while [[ $j -lt ${#archs[@]} ]]; do
+		while [[ $j -lt ${#archs[@]} ]]; do		
 			a=${archs[$j]};
 			if [[ ${comparchs[$j]} -eq 1 ]]; then
 				if [[ $# -eq 3 ]]; then

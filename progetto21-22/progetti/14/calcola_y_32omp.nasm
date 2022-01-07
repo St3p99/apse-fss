@@ -6,7 +6,6 @@ section .data
     zero    equ     0
     meno_uno equ    -1
     tre     equ     3
-    UNROLL_PESCI        	equ		4
     UNROLL_COORDINATE		equ		2
     align 16
     v_uno dd 1.0, 1.0, 1.0, 1.0
@@ -25,9 +24,8 @@ section .text
     input_x     equ     8  ; riga del x[i] pesce i-esima
     matrix_y    equ     12 ; riga del y[i] pesce i-esima
     input_d     equ     16
-    padding     equ     20
-    stepind     equ     24 
-    vector_r    equ     28
+    stepind     equ     20 
+    vector_r    equ     24
     
     ; DEBUG
     ; msg	db	'ECCOCIIIII!!!!!!!!!',32,0
@@ -48,7 +46,7 @@ calcola_y_asm_omp:
     mov ebx, [ebp+matrix_y]	; indirizzo matrice y (init riga ultimo pesce da C)
 	mov edx, [ebp+input_d]
     imul   edx,    dim        ; input_d*dim
-    mov edi, [ebp+input_np]
+
     mov esi, [ebp+vector_r] ; esi <- indirizzo vettore baricentro
     
     movss  xmm7, [ebp+stepind]
@@ -68,6 +66,7 @@ for_blocco_coordinate:
         movups  xmm2,   [esi]       ; r[0..3]
         mulps   xmm2,   xmm6
         subps   xmm2,   xmm5
+    
         movups  xmm3,   [esi+p*dim] ; r[4..7]
         mulps   xmm3,   xmm6
         subps   xmm3,   xmm5

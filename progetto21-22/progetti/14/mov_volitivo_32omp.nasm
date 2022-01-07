@@ -13,8 +13,8 @@ section .data
 
 section .bss
     ; DEBUG
-    ; alignb 16
-    ; m resd p
+    alignb 16
+    m resd p
 
 section .text
     global mov_volitivo_asm_omp
@@ -27,8 +27,8 @@ section .text
     vector_r    equ     28
     
     ; DEBUG
-    ; msg	db	'ECCOCIIIII!!!!!!!!!',32,0
-    ; nl	db	10,0
+    msg	db	'ECCOCIIIII!!!!!!!!!',32,0
+    nl	db	10,0
     ; prints msg
 	; prints nl
 
@@ -61,8 +61,11 @@ for_distanza:
         cmp     ecx,    edx                ; if( i+8 > n_coordinate )
         jg      fine_for_distanza  ;   esci
 
-        movaps xmm0, [eax+ecx-p*dim*UNROLL_COORDINATE]    
-        movaps xmm1, [eax+ecx-p*dim]
+        movaps xmm0, [eax+ecx-p*dim*UNROLL_COORDINATE]  ; x 0..3  
+        movaps xmm1, [eax+ecx-p*dim]                    ; x 0..3
+
+        subps xmm0,  [ebx+ecx-p*dim*UNROLL_COORDINATE]
+        subps xmm1,  [ebx+ecx-p*dim]
 
         mulps  xmm0, xmm0
         mulps  xmm1, xmm1
@@ -90,7 +93,7 @@ next_coordinate:
     haddps xmm2, xmm2
     
     sqrtps xmm2, xmm2 ; distanza euclidea 
-    
+
     mov     ecx,    p*dim*UNROLL_COORDINATE                ; coordinata
     movss   xmm4,   [esi]            ; ri
     shufps  xmm4,   xmm4, 00000000b ; xmm4 <- [ri, ri, ri, ri]

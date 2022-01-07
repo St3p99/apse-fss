@@ -67,8 +67,11 @@ for_distanza:
         cmp     ecx,    edx                ; if( i+8 > n_coordinate )
         jg      fine_for_distanza  ;   esci
 
-        movaps xmm0, [eax+ecx-p*dim*UNROLL_COORDINATE]    
-        movaps xmm1, [eax+ecx-p*dim]
+        movaps xmm0, [eax+ecx-p*dim*UNROLL_COORDINATE]  ; x 0..3  
+        movaps xmm1, [eax+ecx-p*dim]                    ; x 0..3
+
+        subps xmm0,  [ebx+ecx-p*dim*UNROLL_COORDINATE]     
+        subps xmm1,  [ebx+ecx-p*dim]
 
         mulps  xmm0, xmm0
         mulps  xmm1, xmm1
@@ -100,6 +103,8 @@ next_coordinate:
     mov     ecx,    p*dim*UNROLL_COORDINATE                ; coordinata
     movss   xmm4,   [esi]            ; ri
     shufps  xmm4,   xmm4, 00000000b ; xmm4 <- [ri, ri, ri, ri]
+
+
 for_blocco_coordinate:
     cmp     ecx,    edx                ; if( i+8 > n_coordinate )
     jg      fine_for_blocco_coordinate  ;   esci
@@ -161,8 +166,11 @@ for_distanza_2:
         cmp     ecx,    edx                ; if( i+8 > n_coordinate )
         jg      fine_for_distanza_2  ;   esci
 
-        movaps xmm0, [eax+ecx-p*dim*UNROLL_COORDINATE]    
-        movaps xmm1, [eax+ecx-p*dim]
+        movaps xmm0, [eax+ecx-p*dim*UNROLL_COORDINATE]  ; x 0..3  
+        movaps xmm1, [eax+ecx-p*dim]                    ; x 0..3
+
+        subps xmm0,  [ebx+ecx-p*dim*UNROLL_COORDINATE]     
+        subps xmm1,  [ebx+ecx-p*dim]
 
         mulps  xmm0, xmm0
         mulps  xmm1, xmm1
@@ -194,6 +202,7 @@ next_coordinate_2:
     mov     ecx,    p*dim*UNROLL_COORDINATE                ; coordinata
     movss   xmm4,   [esi]            ; ri
     shufps  xmm4,   xmm4, 00000000b ; xmm4 <- [ri, ri, ri, ri]
+
 for_blocco_coordinate_2:
     cmp     ecx,    edx                ; if( i+8 > n_coordinate )
     jg      fine_for_blocco_coordinate_2  ;   esci
@@ -256,7 +265,10 @@ for_distanza_3:
         jg      fine_for_distanza_3  ;   esci
 
         movaps xmm0, [eax+ecx-p*dim*UNROLL_COORDINATE]    
-        movaps xmm1, [eax+ecx-p*dim]
+        movaps xmm1, [eax+ecx-p*dim]                    
+
+        subps xmm0,  [ebx+ecx-p*dim*UNROLL_COORDINATE]     
+        subps xmm1,  [ebx+ecx-p*dim]
 
         mulps  xmm0, xmm0
         mulps  xmm1, xmm1
@@ -288,6 +300,8 @@ next_coordinate_3:
     mov     ecx,    p*dim*UNROLL_COORDINATE                ; coordinata
     movss   xmm4,   [esi]            ; ri
     shufps  xmm4,   xmm4, 00000000b ; xmm4 <- [ri, ri, ri, ri]
+
+
 for_blocco_coordinate_3:
     cmp     ecx,    edx                ; if( i+8 > n_coordinate )
     jg      fine_for_blocco_coordinate_3  ;   esci
@@ -349,8 +363,11 @@ for_distanza_4:
         cmp     ecx,    edx                ; if( i+8 > n_coordinate )
         jg      fine_for_distanza_4  ;   esci
 
-        movaps xmm0, [eax+ecx-p*dim*UNROLL_COORDINATE]    
-        movaps xmm1, [eax+ecx-p*dim]
+        movaps xmm0, [eax+ecx-p*dim*UNROLL_COORDINATE]  ; x 0..3  
+        movaps xmm1, [eax+ecx-p*dim]                    ; x 0..3
+
+        subps xmm0,  [ebx+ecx-p*dim*UNROLL_COORDINATE]     
+        subps xmm1,  [ebx+ecx-p*dim]
 
         mulps  xmm0, xmm0
         mulps  xmm1, xmm1
@@ -382,6 +399,7 @@ next_coordinate_4:
     mov     ecx,    p*dim*UNROLL_COORDINATE                ; coordinata
     movss   xmm4,   [esi]            ; ri
     shufps  xmm4,   xmm4, 00000000b ; xmm4 <- [ri, ri, ri, ri]
+
 for_blocco_coordinate_4:
     cmp     ecx,    edx                ; if( i+8 > n_coordinate )
     jg      fine_for_blocco_coordinate_4  ;   esci
@@ -445,12 +463,18 @@ fine_for_pesci:
 
 for_pesce:
     mov     ecx, p*dim*UNROLL_COORDINATE
+
+    xorps   xmm2,   xmm2 ; azzera xmm2 (accumuliamo somma distanza)
+    xorps   xmm3,   xmm3 ; azzera xmm3 (accumuliamo somma distanza)
 for_distanza_extra:
         cmp     ecx,    edx                 ; if( i+8 > n_coordinate )
         jg      fine_for_distanza_extra  ;   esci
 
-        movaps xmm0, [eax+ecx-p*dim*UNROLL_COORDINATE]    
-        movaps xmm1, [eax+ecx-p*dim]
+        movaps xmm0, [eax+ecx-p*dim*UNROLL_COORDINATE]  ; x 0..3  
+        movaps xmm1, [eax+ecx-p*dim]                    ; x 0..3
+
+        subps xmm0,  [ebx+ecx-p*dim*UNROLL_COORDINATE]     
+        subps xmm1,  [ebx+ecx-p*dim]
 
         mulps  xmm0, xmm0
         mulps  xmm1, xmm1
@@ -477,11 +501,12 @@ next_coordinate_extra:
     haddps xmm2, xmm2
     haddps xmm2, xmm2
     
-    sqrtps xmm2, xmm2 ; distanza euclidea 
+    sqrtps xmm2, xmm2 ; distanza euclidea
     
     mov     ecx,    p*dim*UNROLL_COORDINATE                ; coordinata
     movss   xmm4,   [esi]            ; ri
     shufps  xmm4,   xmm4, 00000000b ; xmm4 <- [ri, ri, ri, ri]
+
 for_blocco_coordinate_extra:
         cmp     ecx,    edx                 ; if( i+8 > n_coordinate )
         jg      fine_for_blocco_coordinate_extra  ;   esci
