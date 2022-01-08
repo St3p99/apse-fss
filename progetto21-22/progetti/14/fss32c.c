@@ -430,11 +430,9 @@ void calcola_val_f(VECTOR f_cur, params* input, VECTOR x_quadro, VECTOR c_per_x)
 	int n_coordinate_tot = input->d + input->padding_d;
 
  	calcola_val_f_asm(input->x, n_pesci, n_coordinate_tot, input->c, x_quadro, c_per_x);
-  	for(int pesce = 0; pesce < n_pesci; pesce++){ //numero pesci, ovviamente escludi il primo che hai già calcolato
-	  	// printf("ASM: x_quadro[%d] = %f\n", pesce,  x_quadro[pesce]);
-		// printf("ASM: c_per_x[%d] = %f\n", pesce, c_per_x[pesce]);
+  	for(int pesce = 0; pesce < n_pesci; pesce++){
     	f_cur[pesce] = exp(x_quadro[pesce]) + x_quadro[pesce] - c_per_x[pesce];
-  	}//iterazione su tutti i pesci
+  	}
 }//calcola_val_f
 
 void calcola_f_pesce(params* input, int pesce, type* ret){
@@ -445,121 +443,14 @@ void calcola_f_pesce(params* input, int pesce, type* ret){
 	type x_quadro = 0.0;
   	type c_per_x = 0.0;
 	  
-	for(int i = 0; i < n_coordinate; i++){ // coordinate pesce
-      //rappresentazione per righe della matrice quindi A[i,j] -> A[n*i+j] dove n indica il numero di collone
-      val_i = input->x[pesce*(n_coordinate+padding_d)+i]; //valore coordinata
-      coef_i = input->c[i]; //coefficiente corrispondente alla coordinata corrente
+	for(int i = 0; i < n_coordinate; i++){
+      val_i = input->x[pesce*(n_coordinate+padding_d)+i];
+      coef_i = input->c[i];
 
       x_quadro += (val_i*val_i);
       c_per_x += (val_i*coef_i);
-    }//iterazione sulle coordinate di ogni singolo pesce
-	// printf("C: x_quadro[%d] = %f\n", pesce, x_quadro);
-	// printf("C: c_per_x[%d] = %f\n", pesce, c_per_x);
+    }
     *ret = exp(x_quadro) + x_quadro - c_per_x;
-}
-
-// MOV ISTINTIVO
-void alimenta(params* input, VECTOR deltaf, VECTOR pesi, type* mindeltaf){
-	int n_pesci = input->np;
-	for(int pesce = 0; pesce < n_pesci; pesce++)
-		pesi[pesce] = pesi[pesce] + (deltaf[pesce]/(*mindeltaf));
-	// Assumo che il valore di mindeltaf sia quello corretto
-	// ovvero il max valore di f calcolato rispetto i pesci
-	// che hanno eseguito un movimento valido
-}
-
-void mov_istintivo(params* input, VECTOR deltaf, VECTOR deltax, VECTOR I){
-	int n_pesci = input->np;
-	int n_coordinate = input->d;
-	int padding_d = input->padding_d;
-	int pesce = 0;
-	type deltafsum = deltaf[pesce];
-	
-	for(int j=0; j < n_coordinate; j++){
-		I[j] = deltax[pesce*(n_coordinate+padding_d)+j]*(deltaf[pesce]); 
-	} // Inizializza I per il primo pesce
-	
-	for(pesce = 1; pesce < n_pesci; pesce++){
-		deltafsum += deltaf[pesce]; // calcola denominatore
-		for(int j=0; j < n_coordinate;j++){
-			I[j] += deltax[pesce*(n_coordinate+padding_d)+j]*(deltaf[pesce]); 
-		}
-	}
-	if( deltafsum == 0 ) return;
-	for(int j=0; j < n_coordinate; j++){
-		I[j] = I[j]/deltafsum;
-	}
-	for(int i = 0; i < n_pesci; i++){
-		for(int j = 0; j < n_coordinate; j++){
-			input->x[i*(n_coordinate+padding_d)+j] += I[j];
-		}
-	}
-}
-
-// MOV VOLITIVO
-void mov_volitivo(params* input,  VECTOR baricentro, type* peso_tot_old, type* peso_tot_cur, int* ind_r){
-	type direzione = 1;
-	if(*peso_tot_old < *peso_tot_cur){
-		 direzione = -1; 
-	} 
-	type dist;
-	type rand;
-	int n_pesci = input->np;
-	int n_coordinate = input->d;
-	int padding_d = input->padding_d;
-
-	for(int i = 0; i < n_pesci; i++){
-		calcola_distanza(input, i, baricentro, &dist);
-		rand = input->r[*ind_r]; 
-		*ind_r = *ind_r + 1;
-		for(int j = 0; j < n_coordinate; j++){
-			input->x[i*(n_coordinate+padding_d)+j] += (direzione)*(input->stepvol)*(rand)*((input->x[i*(n_coordinate+padding_d)+j]-baricentro[j])/dist);
-		}
-	}
-	*peso_tot_old = *peso_tot_cur;
-}
-
-void calcola_distanza (params* input, int i, VECTOR b, type* distanza){
-	int n_coordinate = input->d;
-	int padding_d = input->padding_d;
-	type somma = 0;
-	for(int j = 0; j < n_coordinate; j++){
-		type var = input->x[i*(n_coordinate+padding_d)+j]-b[j];
-		somma += var*var;
-	}
-	*distanza = sqrt(somma);
-}
-
-void calcola_baricentro (params* input, VECTOR pesi, VECTOR baricentro, type* peso_tot_cur){
-	int n_coordinate = input->d;
-	numeratore_baricentro(input, pesi, baricentro);
-	calcola_peso_tot_branco(input, pesi, peso_tot_cur);
-	for(int i = 0; i < n_coordinate; i++){
-		baricentro[i] = baricentro[i]/(*peso_tot_cur);
-	}
-}
-
-void calcola_peso_tot_branco (params* input, VECTOR pesi, type *ret){
-	int n_pesci = input->np;
-	*ret = 0;
-	for (int i = 0; i < n_pesci; i++){
-		*ret = *ret + pesi[i];
-	}
-}
-
-void numeratore_baricentro ( params* input, VECTOR pesi, VECTOR numeratore ){
-	int n_pesci = input->np;
-	int n_coordinate = input->d;
-	int padding_d = input->padding_d;
-	int i = 0;
-	for(int j = 0; j < n_coordinate; j++ ){
-		numeratore[j] = input->x[i*(n_coordinate+padding_d)+j]*pesi[i];
-	}
-	for(i++; i < n_pesci; i++ ){
-		for(int j = 0; j < n_coordinate; j++ ){
-			numeratore[j] += input->x[i*(n_coordinate+padding_d)+j]*pesi[i];
-		}
-	}
 }
 
 void calcola_f_min(int n_pesci, VECTOR f_cur, type* f_min, int* ind_f_min){

@@ -17,7 +17,7 @@ f_min = 0.996082
 FSS time = 0.003 secs
 
 Done.
-Total time = 8
+Total time = 7
 ERR = 0.000921
 timeout 100 ./fss32ompc -c ../../data/coeff32_8.ds2 -r ../../data/rand32_8_64_250.ds2 -x ../../data/x32_8_64.ds2 -np 64 -si 0.1 -sv 0.0125 -w 1.25 -it 250
 Coefficient file name: '../../data/coeff32_8.ds2'
@@ -32,10 +32,10 @@ Number of iterations [it]: 250
 f min iniziale = 1.035268
 ind_f_min = 50
 f_min = 0.996082
-FSS time = 0.006 secs
+FSS time = 0.004 secs
 
 Done.
-Total time = 12
+Total time = 8
 ERR = 0.000921
 timeout 100 ./fss32c -c ../../data/coeff32_125.ds2 -r ../../data/rand32_125_735_750.ds2 -x ../../data/x32_125_735.ds2 -np 735 -si 0.006 -sv 0.0008 -w 0.08 -it 750
 Coefficient file name: '../../data/coeff32_125.ds2'
@@ -50,10 +50,10 @@ Number of iterations [it]: 750
 f min iniziale = 1.004068
 ind_f_min = 96
 f_min = 0.999665
-FSS time = 0.225 secs
+FSS time = 0.216 secs
 
 Done.
-Total time = 439
+Total time = 317
 ERR = 0.001916
 timeout 100 ./fss32ompc -c ../../data/coeff32_125.ds2 -r ../../data/rand32_125_735_750.ds2 -x ../../data/x32_125_735.ds2 -np 735 -si 0.006 -sv 0.0008 -w 0.08 -it 750
 Coefficient file name: '../../data/coeff32_125.ds2'
@@ -68,10 +68,10 @@ Number of iterations [it]: 750
 f min iniziale = 1.004068
 ind_f_min = 96
 f_min = 0.999665
-FSS time = 0.745 secs
+FSS time = 0.107 secs
 
 Done.
-Total time = 826
+Total time = 171
 ERR = 0.001916
 timeout 100 ./fss32c -c ../../data/coeff32_256.ds2 -r ../../data/rand32_256_768_1250.ds2 -x ../../data/x32_256_768.ds2 -np 768 -si 0.003 -sv 0.0004 -w 0.04 -it 1250
 Coefficient file name: '../../data/coeff32_256.ds2'
@@ -86,10 +86,10 @@ Number of iterations [it]: 1250
 f min iniziale = 1.002131
 ind_f_min = 257
 f_min = 0.999846
-FSS time = 0.925 secs
+FSS time = 0.601 secs
 
 Done.
-Total time = 1522
+Total time = 925
 ERR = 0.002212
 timeout 100 ./fss32ompc -c ../../data/coeff32_256.ds2 -r ../../data/rand32_256_768_1250.ds2 -x ../../data/x32_256_768.ds2 -np 768 -si 0.003 -sv 0.0004 -w 0.04 -it 1250
 Coefficient file name: '../../data/coeff32_256.ds2'
@@ -104,8 +104,8 @@ Number of iterations [it]: 1250
 f min iniziale = 1.002131
 ind_f_min = 257
 f_min = 0.999846
-FSS time = 0.536 secs
+FSS time = 0.283 secs
 
 Done.
-Total time = 1013
+Total time = 489
 ERR = 0.002212

@@ -53,7 +53,7 @@
 #define	VECTOR		type*
 
 
-#define MAX_NUM_THREADS 8
+#define MAX_NUM_THREADS 7
 
 typedef struct {
 	MATRIX x; //posizione dei pesci
@@ -277,7 +277,7 @@ void stampa_coordinate(params* input){
 }
 
 void stampa_matrice(params* input, MATRIX m, int r, int c){
-	// if(input->silent) return;
+	if(input->silent) return;
 	for(int i = 0; i < r; i++){ //numero pesci
 		printf("m[%d] = [", i);	  
 		for(int coordinata = 0; coordinata < c - 1; coordinata++){ // coordinate pesce
@@ -314,8 +314,9 @@ void fss(params* input){
 	// stampa_coordinate(input);
 	VECTOR pesi = alloc_matrix(1, input->np+input->padding_np);
 	padding_vector(pesi, input->np, input->padding_np);
-	int i;
-	for(i = 0; i < input->np; i++){
+
+	#pragma omp parallel for num_threads(MAX_NUM_THREADS)
+	for(int i = 0; i < input->np; i++){
 		pesi[i] = input->wscale/2;
 	}
 	// -------------------------------------------------
@@ -393,191 +394,72 @@ void mov_individuali(params* input, VECTOR deltaf, MATRIX deltax, MATRIX y, type
 	
 	#pragma omp parallel for num_threads(MAX_NUM_THREADS)
 	for(int pesce = 0; pesce < n_pesci; pesce++){ // numero pesci	
-		mov_individuale_pesce(input, deltax, y, pesce, *ind_r+pesce*n_coordinate, &(f_y[pesce]));
+			// mov_individuale_pesce(input, deltax, y, pesce, *ind_r+pesce*n_coordinate, &(f_y[pesce]));
+			type y_2;
+			type c_y;
+			calcola_y_asm_omp(
+				&(input->x[pesce*n_coordinate_tot]), 
+				&(y[pesce*n_coordinate_tot]), 
+				input->d, input->stepind, &(input->r[*ind_r+pesce*n_coordinate]));
+			calcola_f_y_asm_omp(
+				&(input->x[pesce*n_coordinate_tot]), 
+				&(y[pesce*n_coordinate_tot]), 
+				input->d+input->padding_d, 
+				&(deltax[pesce*n_coordinate_tot]), 
+				input->c, &y_2, &c_y
+			);
+			f_y[pesce] = exp(y_2) + y_2 - c_y;
 	}
 	*ind_r = *ind_r + n_pesci*n_coordinate;
 	
-	for(int pesce = 0; pesce < n_pesci; pesce++){ // numero pesci	
+	#pragma omp parallel for num_threads(MAX_NUM_THREADS)
+	for(int pesce = 0; pesce < n_pesci; pesce++){ // aggiorna input->x e deltaf
 		if(f_y[pesce] >= f_cur[pesce]){ // la posizione non è migliore
 			deltaf[pesce] = 0.0; 
 		}  // se il pesce non migliora non viene spostato
 		else{ // il pesce ha acquisito una posizione migliore
+			for(int coordinata = 0; coordinata < n_coordinate; coordinata++){ // sposta coordinate
+	    		input->x[pesce*(n_coordinate_tot)+coordinata] = y[pesce*(n_coordinate_tot)+coordinata];
+			}
 			deltaf[pesce] = f_y[pesce] - f_cur[pesce];
-			if(deltaf[pesce] < *mindeltaf ) *mindeltaf = deltaf[pesce]; //aggiorno il minimo deltaf
+			#pragma omp critical
+			{
+				if(deltaf[pesce] < *mindeltaf ) 
+					*mindeltaf = deltaf[pesce]; //aggiorno il minimo deltaf
+			}
 			f_cur[pesce] = f_y[pesce]; // il nuovo valore del pesce
-			
 		}// else
 	}
-	
-	#pragma omp parallel for num_threads(MAX_NUM_THREADS)
-	for(int pesce = 0; pesce < n_pesci; pesce++){ // se i pesci si sono spostati deltaf è diverso da 0
-		sposta_coordinate(input->x, y, n_coordinate, n_coordinate_tot, deltaf, pesce);
-	}//for
 }//mov_individuale
 
-void sposta_coordinate(MATRIX x, MATRIX y, int c, int c_tot, VECTOR deltaf, int pesce){
-	for(int coordinata = 0; coordinata < c; coordinata++){
-		if(deltaf[pesce] != 0.0)
-	    	x[pesce*(c_tot)+coordinata] = y[pesce*(c_tot)+coordinata];
-	}
-}
-
-
-void mov_individuale_pesce(params* input, MATRIX deltax, MATRIX y, 
-						int pesce, int ind_r, type* f_y_pesce){
-	int n_coordinate_tot = input->d+input->padding_d;
-	type y_2 = 0.0;
-	type c_y = 0.0;
-	calcola_y_asm_omp(
-		&(input->x[pesce*n_coordinate_tot]), 
-		&(y[pesce*n_coordinate_tot]), 
-		input->d, input->stepind, &(input->r[ind_r]));
-	calcola_f_y_asm_omp(
-		&(input->x[pesce*n_coordinate_tot]), 
-		&(y[pesce*n_coordinate_tot]), 
-		input->d+input->padding_d, 
-		&(deltax[pesce*n_coordinate_tot]), 
-		input->c, &y_2, &c_y
-	);
-	*f_y_pesce = exp(y_2) + y_2 - c_y;
-}
-
 void calcola_val_f(VECTOR f_cur, params* input){// conviene il suo utilizzo solo nell'inizializzazione
-  	int n_pesci = input->np;
 	int n_coordinate_tot = input->d + input->padding_d;
-	int coordinata;
 
 	type x_2;
   	type c_x;
 	#pragma omp parallel for num_threads(MAX_NUM_THREADS) private(x_2, c_x)
-	for(int pesce = 0; pesce < n_pesci; pesce++){
+	for(int pesce = 0; pesce < input->np; pesce++){
 		calcola_val_f_asm_omp(&(input->x[pesce*n_coordinate_tot]), n_coordinate_tot, input->c, &x_2, &c_x);
 		f_cur[pesce] = exp(x_2) + x_2 - c_x;
   	}
 }//calcola_val_f
 
-void calcola_f_pesce(params* input, int pesce, type* x_2, type* c_x){
-	int n_coordinate = input->d;
-	type val_i; 
-  	type coef_i;
-	
-	*x_2 = 0.0;
-	*c_x = 0.0;	  
-	for(int i = 0; i < n_coordinate; i++){ // coordinate pesce
-	  val_i = input->x[pesce*(n_coordinate+input->padding_d)+i]; //valore coordinata
-      coef_i = input->c[i]; //coefficiente corrispondente alla coordinata corrente
-
-      *x_2 += (val_i*val_i);
-      *c_x += (val_i*coef_i);	  
-    }//iterazione sulle coordinate di ogni singolo pesce
-}
-
-// MOV ISTINTIVO
-
-// NON UTILIZZATO
-void alimenta(params* input, VECTOR deltaf, VECTOR pesi, type* mindeltaf){
-	int n_pesci = input->np;
-	for(int pesce = 0; pesce < n_pesci; pesce++)
-		pesi[pesce] = pesi[pesce] + (deltaf[pesce]/(*mindeltaf));
-	// Assumo che il valore di mindeltaf sia quello corretto
-	// ovvero il max valore di f calcolato rispetto i pesci
-	// che hanno eseguito un movimento valido
-}
-// NON UTILIZZATO
-void mov_istintivo(params* input, VECTOR deltaf, VECTOR deltax, VECTOR I){
-	int n_pesci = input->np;
-	int n_coordinate = input->d;
-	int padding_d = input->padding_d;
-	int pesce = 0;
-	type deltafsum = deltaf[pesce];
-	
-	for(int j=0; j < n_coordinate; j++){
-		I[j] = deltax[pesce*(n_coordinate+padding_d)+j]*(deltaf[pesce]); 
-	} // Inizializza I per il primo pesce
-	
-	for(pesce = 1; pesce < n_pesci; pesce++){
-		deltafsum += deltaf[pesce]; // calcola denominatore
-		for(int j=0; j < n_coordinate;j++){
-			I[j] += deltax[pesce*(n_coordinate+padding_d)+j]*(deltaf[pesce]); 
-		}
-	}
-	if( deltafsum == 0 ) return;
-	for(int j=0; j < n_coordinate; j++){
-		I[j] = I[j]/deltafsum;
-	}
-	for(pesce = 0; pesce < n_pesci; pesce++){
-		for(int j = 0; j < n_coordinate; j++){
-			input->x[pesce*(n_coordinate+padding_d)+j] += I[j];
-		}
-	}
-}
-
 // MOV VOLITIVO
 void mov_volitivo(params* input, VECTOR baricentro, type* peso_tot_old, type* peso_tot_cur, int* ind_r){
 	type direzione = 1;
-	if(*peso_tot_old < *peso_tot_cur){
+	if(*peso_tot_old < *peso_tot_cur)
 		 direzione = -1; 
-	} 
-	int n_pesci = input->np;
-	int n_coordinate_tot = input->d+input->padding_d;
 
 	#pragma omp parallel for num_threads(MAX_NUM_THREADS)
-	for(int pesce = 0; pesce < n_pesci; pesce++){
+	for(int pesce = 0; pesce < input->np; pesce++){
 		mov_volitivo_asm_omp(
-			&(input->x[pesce*n_coordinate_tot]), 
+			&(input->x[pesce*(input->d+input->padding_d)]), 
 			input->d, input->stepvol, baricentro, 
 			direzione, &(input->r[*ind_r+pesce])
 		);
 	}
-	*ind_r = *ind_r + n_pesci;
+	*ind_r = *ind_r + input->np;
 	*peso_tot_old = *peso_tot_cur;
-}
-
-// NON UTILIZZATO
-void calcola_distanza (params* input, int i, VECTOR b, type* distanza){
-	int n_coordinate = input->d;
-	int padding_d = input->padding_d;
-	type somma = 0;
-	for(int j = 0; j < n_coordinate; j++){
-		type var = input->x[i*(n_coordinate+padding_d)+j]-b[j];
-		somma += var*var;
-	}
-	*distanza = sqrt(somma);
-}
-
-// NON UTILIZZATO
-void calcola_baricentro (params* input, VECTOR pesi, VECTOR baricentro, type* peso_tot_cur){
-	int n_coordinate = input->d;
-	numeratore_baricentro(input, pesi, baricentro);
-	calcola_peso_tot_branco(input, pesi, peso_tot_cur);
-	for(int i = 0; i < n_coordinate; i++){
-		baricentro[i] = baricentro[i]/(*peso_tot_cur);
-	}
-}
-
-// NON UTILIZZATO
-void calcola_peso_tot_branco (params* input, VECTOR pesi, type *ret){
-	int n_pesci = input->np;
-	*ret = 0;
-	for (int i = 0; i < n_pesci; i++){
-		*ret = *ret + pesi[i];
-	}
-}
-
-// NON UTILIZZATO
-void numeratore_baricentro ( params* input, VECTOR pesi, VECTOR numeratore ){
-	int n_pesci = input->np;
-	int n_coordinate = input->d;
-	int padding_d = input->padding_d;
-	int i = 0;
-	for(int j = 0; j < n_coordinate; j++ ){
-		numeratore[j] = input->x[i*(n_coordinate+padding_d)+j]*pesi[i];
-	}
-	for(i++; i < n_pesci; i++ ){
-		for(int j = 0; j < n_coordinate; j++ ){
-			numeratore[j] += input->x[i*(n_coordinate+padding_d)+j]*pesi[i];
-		}
-	}
 }
 
 void calcola_f_min(int n_pesci, VECTOR f_cur, type* f_min, int* ind_f_min){
