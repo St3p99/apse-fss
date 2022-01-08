@@ -1,4 +1,4 @@
-Risultati esecuzione di test_one su arch 32 e 32omp (7 thread)
+Risultati esecuzione di test_one su arch 32 e 32omp (8 THREADS)
 
 Gruppo: progetti/14
 timeout 100 ./fss32c -c ../../data/coeff32_8.ds2 -r ../../data/rand32_8_64_250.ds2 -x ../../data/x32_8_64.ds2 -np 64 -si 0.1 -sv 0.0125 -w 1.25 -it 250
@@ -14,10 +14,10 @@ Number of iterations [it]: 250
 f min iniziale = 1.035268
 ind_f_min = 50
 f_min = 0.996082
-FSS time = 0.004 secs
+FSS time = 0.003 secs
 
 Done.
-Total time = 13
+Total time = 8
 ERR = 0.000921
 timeout 100 ./fss32ompc -c ../../data/coeff32_8.ds2 -r ../../data/rand32_8_64_250.ds2 -x ../../data/x32_8_64.ds2 -np 64 -si 0.1 -sv 0.0125 -w 1.25 -it 250
 Coefficient file name: '../../data/coeff32_8.ds2'
@@ -32,10 +32,10 @@ Number of iterations [it]: 250
 f min iniziale = 1.035268
 ind_f_min = 50
 f_min = 0.996082
-FSS time = 0.015 secs
+FSS time = 0.006 secs
 
 Done.
-Total time = 20
+Total time = 12
 ERR = 0.000921
 timeout 100 ./fss32c -c ../../data/coeff32_125.ds2 -r ../../data/rand32_125_735_750.ds2 -x ../../data/x32_125_735.ds2 -np 735 -si 0.006 -sv 0.0008 -w 0.08 -it 750
 Coefficient file name: '../../data/coeff32_125.ds2'
@@ -48,13 +48,13 @@ Volitive step [sv]: 0.000800
 Weight scale [w]: 0.080000
 Number of iterations [it]: 750
 f min iniziale = 1.004068
-ind_f_min = 605
-f_min = 0.999667
-FSS time = 0.680 secs
+ind_f_min = 96
+f_min = 0.999665
+FSS time = 0.225 secs
 
 Done.
-Total time = 969
-ERR = 0.002110
+Total time = 439
+ERR = 0.001916
 timeout 100 ./fss32ompc -c ../../data/coeff32_125.ds2 -r ../../data/rand32_125_735_750.ds2 -x ../../data/x32_125_735.ds2 -np 735 -si 0.006 -sv 0.0008 -w 0.08 -it 750
 Coefficient file name: '../../data/coeff32_125.ds2'
 Random numbers file name: '../../data/rand32_125_735_750.ds2'
@@ -66,12 +66,12 @@ Volitive step [sv]: 0.000800
 Weight scale [w]: 0.080000
 Number of iterations [it]: 750
 f min iniziale = 1.004068
-ind_f_min = 96**** ERRORE ******
+ind_f_min = 96
 f_min = 0.999665
-FSS time = 0.319 secs
+FSS time = 0.745 secs
 
 Done.
-Total time = 435
+Total time = 826
 ERR = 0.001916
 timeout 100 ./fss32c -c ../../data/coeff32_256.ds2 -r ../../data/rand32_256_768_1250.ds2 -x ../../data/x32_256_768.ds2 -np 768 -si 0.003 -sv 0.0004 -w 0.04 -it 1250
 Coefficient file name: '../../data/coeff32_256.ds2'
@@ -86,10 +86,10 @@ Number of iterations [it]: 1250
 f min iniziale = 1.002131
 ind_f_min = 257
 f_min = 0.999846
-FSS time = 2.119 secs
+FSS time = 0.925 secs
 
 Done.
-Total time = 2604
+Total time = 1522
 ERR = 0.002212
 timeout 100 ./fss32ompc -c ../../data/coeff32_256.ds2 -r ../../data/rand32_256_768_1250.ds2 -x ../../data/x32_256_768.ds2 -np 768 -si 0.003 -sv 0.0004 -w 0.04 -it 1250
 Coefficient file name: '../../data/coeff32_256.ds2'
@@ -104,8 +104,8 @@ Number of iterations [it]: 1250
 f min iniziale = 1.002131
 ind_f_min = 257
 f_min = 0.999846
-FSS time = 0.625 secs
+FSS time = 0.536 secs
 
 Done.
-Total time = 898
+Total time = 1013
 ERR = 0.002212
