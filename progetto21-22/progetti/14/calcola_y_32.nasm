@@ -32,8 +32,8 @@ section .text
     vector_r    equ     32
     
     ; DEBUG
-    ; msg	db	'ECCOCIIIII!!!!!!!!!',32,0
-    ; nl	db	10,0
+    msg	db	'ECCOCIIIII!!!!!!!!!',32,0
+    nl	db	10,0
     ; prints msg
 	; prints nl
 
@@ -345,7 +345,7 @@ next_pesce:
     add     ebx, ecx    ; ebx -= (d+padding)*dim
     
     dec     edi
-    cmp     edi, zero ; pesce+1 > n_pesci
+    cmp     edi, zero 
     jg     for_pesce
 return:
     

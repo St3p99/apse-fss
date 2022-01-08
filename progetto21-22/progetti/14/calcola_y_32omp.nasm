@@ -28,8 +28,8 @@ section .text
     vector_r    equ     24
     
     ; DEBUG
-    ; msg	db	'ECCOCIIIII!!!!!!!!!',32,0
-    ; nl	db	10,0
+    msg	db	'ECCOCIIIII!!!!!!!!!',32,0
+    nl	db	10,0
     ; prints msg
 	; prints nl
 
@@ -59,6 +59,7 @@ calcola_y_asm_omp:
 for_blocco_coordinate:
         cmp     ecx,    edx                ; if( i+8 > n_coordinate )
         jg      fine_for_blocco_coordinate  ;   esci
+
         
         movaps  xmm0,   [eax+ecx-p*dim*UNROLL_COORDINATE] ; [xi, xi+1, xi+2, xi+3]
         movaps  xmm1,   [eax+ecx-p*dim]                   ; [xi+4, ...,      xi+7]

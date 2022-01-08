@@ -24,8 +24,8 @@ section .text
     vector_i  equ     20
     
     ; DEBUG
-    ; msg	db	'ECCOCIIIII!!!!!!!!!',32,0
-    ; nl	db	10,0
+    msg	db	'ECCOCIIIII!!!!!!!!!',32,0
+    nl	db	10,0
     ; prints msg
 	; prints nl
 
@@ -175,7 +175,6 @@ fine_for_pesci:
     addps   xmm6,   xmm5             ; somma parziale delta_f
     mov     esi,    [ebp+vector_i] ; esi <- indirizzo vettore vector_i
 for_pesce:
-    
     mov     ecx, p*dim*UNROLL_COORDINATE
 for_blocco_coordinate_extra:
         cmp     ecx,    edx                 ; if( i+8 > n_coordinate )

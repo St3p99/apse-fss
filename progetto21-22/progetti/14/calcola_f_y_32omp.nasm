@@ -23,8 +23,8 @@ section .text
     c_y            equ     32
     
 	; DEBUG
-	; msg	           db	    'ECCOCIIIII!!!!!!!!!',32,0
-    ; nl	           db	10,0
+	msg	           db	    'ECCOCIIIII!!!!!!!!!',32,0
+    nl	           db	10,0
     ; prints msg
 	; prints nl
 
@@ -83,10 +83,8 @@ for_blocco_coordinate:
 fine_blocco_coordinate:
 	cmp ecx, 0 
     je fine_coordinate
-gestione_coordinate_rimanenti:
+; gestione_coordinate_rimanenti
 	movaps xmm2, [ebx] ;y
-	add ebx, p*dim
-
 	movaps xmm3,[eax]; x
 	
 	subps xmm5,xmm3 ; y-x	
@@ -98,10 +96,6 @@ gestione_coordinate_rimanenti:
 
 	mulps xmm2,xmm2 ; yi*yi
     addps xmm0,xmm2 ; tengo la somma parziale al fine di calcolare y^2 tot
-
-	sub ecx, p
-    cmp ecx, 0
-	jg gestione_coordinate_rimanenti
 
 fine_coordinate:
 	haddps xmm0, xmm0

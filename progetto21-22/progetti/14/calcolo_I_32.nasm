@@ -20,12 +20,12 @@ section .text
     delta_x     equ     8
     input_np    equ     12
     input_d     equ     16
-    delta_f      equ     20
-    vector_i  equ     24
+    delta_f     equ     20
+    vector_i    equ     24
     
     ; DEBUG
-    ; msg	db	'ECCOCIIIII!!!!!!!!!',32,0
-    ; nl	db	10,0
+    msg	db	'ECCOCIIIII!!!!!!!!!',32,0
+    nl	db	10,0
     ; prints msg
 	; prints nl
 

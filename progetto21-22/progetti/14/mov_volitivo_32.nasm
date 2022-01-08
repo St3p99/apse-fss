@@ -46,7 +46,6 @@ mov_volitivo_asm:
     mov edx, [ebp+input_d]
     imul edx, dim              ; edx < d*dim
     mov edi, [ebp+input_np]
-    ; dec edi                    ; edi < np-1
     mov esi, [ebp+vector_r]
 
     movss  xmm7, [ebp+stepvol]
@@ -101,10 +100,12 @@ next_coordinate:
     sqrtps xmm2, xmm2 ; distanza euclidea 
     
     mov     ecx,    p*dim*UNROLL_COORDINATE                ; coordinata
-    movss   xmm4,   [esi]            ; ri
-    shufps  xmm4,   xmm4, 00000000b ; xmm4 <- [ri, ri, ri, ri]
 
-
+    movups   xmm5,   [esi]            ; ri
+    shufps   xmm4,   xmm5, 00000000b
+    shufps   xmm4,   xmm4, 10101010b  ; random 0 su tutto xmm4
+    
+    
 for_blocco_coordinate:
     cmp     ecx,    edx                ; if( i+8 > n_coordinate )
     jg      fine_for_blocco_coordinate  ;   esci
@@ -153,7 +154,6 @@ for_sing_coordinate:
     cmp ecx, edx
     jb  for_sing_coordinate
 next_2:
-    add     esi, dim ; prossimo random
     mov     ecx, [ebp+padding_d]  ; ecx <- padding_d
     imul    ecx, dim              ; ecx <- padding_d*dim
     add     ecx, edx              ; ecx <- (d + padding_d )*dim
@@ -200,9 +200,10 @@ next_coordinate_2:
     sqrtps xmm2, xmm2 ; distanza euclidea 
     
     mov     ecx,    p*dim*UNROLL_COORDINATE                ; coordinata
-    movss   xmm4,   [esi]            ; ri
-    shufps  xmm4,   xmm4, 00000000b ; xmm4 <- [ri, ri, ri, ri]
-
+    shufps   xmm4,   xmm5, 01010101b
+    shufps   xmm4,   xmm4, 10101010b  ; random 0 su tutto xmm4
+    
+    
 for_blocco_coordinate_2:
     cmp     ecx,    edx                ; if( i+8 > n_coordinate )
     jg      fine_for_blocco_coordinate_2  ;   esci
@@ -251,7 +252,6 @@ for_sing_coordinate_2:
     cmp ecx, edx
     jb  for_sing_coordinate_2
 next_3:
-    add     esi, dim ; prossimo random
     mov     ecx, [ebp+padding_d]  ; ecx <- padding_d
     imul    ecx, dim              ; ecx <- padding_d*dim
     add     ecx, edx              ; ecx <- (d + padding_d )*dim
@@ -298,10 +298,10 @@ next_coordinate_3:
     sqrtps xmm2, xmm2 ; distanza euclidea 
     
     mov     ecx,    p*dim*UNROLL_COORDINATE                ; coordinata
-    movss   xmm4,   [esi]            ; ri
-    shufps  xmm4,   xmm4, 00000000b ; xmm4 <- [ri, ri, ri, ri]
-
-
+    shufps   xmm4,   xmm5, 10101010b
+    shufps   xmm4,   xmm4, 10101010b  ; random 0 su tutto xmm4
+    
+    
 for_blocco_coordinate_3:
     cmp     ecx,    edx                ; if( i+8 > n_coordinate )
     jg      fine_for_blocco_coordinate_3  ;   esci
@@ -350,7 +350,7 @@ for_sing_coordinate_3:
     cmp ecx, edx
     jb  for_sing_coordinate_3
 next_4:
-    add     esi, dim ; prossimo random
+    
     mov     ecx, [ebp+padding_d]  ; ecx <- padding_d
     imul    ecx, dim              ; ecx <- padding_d*dim
     add     ecx, edx              ; ecx <- (d + padding_d )*dim
@@ -397,9 +397,10 @@ next_coordinate_4:
     sqrtps xmm2, xmm2 ; distanza euclidea 
     
     mov     ecx,    p*dim*UNROLL_COORDINATE                ; coordinata
-    movss   xmm4,   [esi]            ; ri
-    shufps  xmm4,   xmm4, 00000000b ; xmm4 <- [ri, ri, ri, ri]
-
+    shufps   xmm4,   xmm5, 11111111b
+    shufps   xmm4,   xmm4, 10101010b  ; random 0 su tutto xmm4
+    
+    
 for_blocco_coordinate_4:
     cmp     ecx,    edx                ; if( i+8 > n_coordinate )
     jg      fine_for_blocco_coordinate_4  ;   esci
@@ -449,7 +450,7 @@ for_sing_coordinate_4:
     jb  for_sing_coordinate_4
 
 next_pesci:    
-    add     esi, dim ; prossimo random
+    add     esi, UNROLL_PESCI*dim ; prossimi random
     mov     ecx, [ebp+padding_d]  ; ecx <- padding_d
     imul    ecx, dim              ; ecx <- padding_d*dim
     add     ecx, edx              ; ecx <- (d + padding_d )*dim
@@ -506,14 +507,16 @@ next_coordinate_extra:
     mov     ecx,    p*dim*UNROLL_COORDINATE                ; coordinata
     movss   xmm4,   [esi]            ; ri
     shufps  xmm4,   xmm4, 00000000b ; xmm4 <- [ri, ri, ri, ri]
+    
 
 for_blocco_coordinate_extra:
         cmp     ecx,    edx                 ; if( i+8 > n_coordinate )
         jg      fine_for_blocco_coordinate_extra  ;   esci
 
         movaps xmm0, [eax+ecx-p*dim*UNROLL_COORDINATE]    ;x 0..3
-
         movaps xmm1, [eax+ecx-p*dim]                      ;x 4..7    movaps xmm3, [ebx+ecx-p*dim*UNROLL_COORDINATE]    ;b 0..3
+        
+        movaps xmm3, [ebx+ecx-p*dim*UNROLL_COORDINATE]                      ;b 4..7
         movaps xmm6, [ebx+ecx-p*dim]                      ;b 4..7
 
         subps xmm3, xmm0                                  ;b - x (0..3)

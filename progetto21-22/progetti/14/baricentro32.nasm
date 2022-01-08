@@ -25,8 +25,8 @@ section .text
     peso_tot    equ     28
     
     ; DEBUG
-    ; msg	db	'ECCOCIIIII!!!!!!!!!',32,0
-    ; nl	db	10,0
+    msg	db	'ECCOCIIIII!!!!!!!!!',32,0
+    nl	db	10,0
     ; prints msg
 	; prints nl
 
@@ -242,7 +242,7 @@ for_pesce:
     shufps  xmm2,   xmm5, 00000000b
     shufps  xmm2,   xmm2, 10101010b  ; peso 0 su tutto xmm2
     shufps  xmm5,   xmm5, 00111001b  ; shift left circolare
-    
+
     mov     ecx, p*dim*UNROLL_COORDINATE
 for_blocco_coordinate_extra:
         cmp     ecx,    edx                 ; if( i+8 > n_coordinate )

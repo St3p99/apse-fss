@@ -53,7 +53,7 @@
 #define	VECTOR		type*
 
 
-#define MAX_NUM_THREADS 7
+#define MAX_NUM_THREADS 8
 
 typedef struct {
 	MATRIX x; //posizione dei pesci
@@ -354,43 +354,29 @@ void fss(params* input){
 	calcola_f_min(input->np, f_cur, &f_min, &ind_f_min);
 	if(!input->silent) printf("f min iniziale = %f\n", f_min);
 	while (it < input->iter){
-		// printf("ITERAZIONE = %d\n", it);
 		//-- calcolo nuove coordinate, deltaf, deltax, mindeltaf, --//
 		mov_individuali(input, deltaf, deltax, y, &mindeltaf, f_cur, f_y, &ind_r); // PRAMGA E ASM ALL'INTERNO 
-		// printf("post mov_ind\n");
-		// printf("mindeltaf = %f\n", mindeltaf);
 		//-- aggiorna pesi dei pesci --//
 		if(mindeltaf < 0){ 
-			// alimenta(input, deltaf, pesi, &mindeltaf);
 			alimenta_asm_omp(n_pesci_tot, deltaf, pesi, mindeltaf);
-			// printf("post alimenta\n");
 			//-- esegui movimento istintivo --//
 			calcola_I_asm_omp(deltax, input->np, n_coordinate_tot, deltaf, I);
-			// printf("post calcola I\n");
 			mov_istintivo_asm_omp(input->x, input->np, n_coordinate_tot, I);
-			// printf("post mov_ist\n");
 		}// else (mindeltaf >= 0) nessun pesce si è spostato durante il mov individuale
 		//-- calcola baricentro --//
 		baricentro_asm_omp(input->x, input->np, n_coordinate_tot, pesi, baricentro, &peso_tot_cur);
-		// printf("post calcola bar\n");
 		//-- esegui movimento volitivo --/
 		mov_volitivo(input, baricentro, &peso_tot_old, &peso_tot_cur, &ind_r); // PRAGMA E ASM ALL'INTERNO		
-		// stampa_matrice(input, input->x, input->np, input->d);
-		// printf("post mov_vol\n");
 		//-- aggiorna valori f_cur     --/
 		calcola_val_f(f_cur, input);  // PRAMGA E ASM ALL'INTERNO 
-		// printf("post calcola val f\n");
 		//-- aggiorna parametri --//
 		input->stepind = input->stepind - decadimento_ind;
 		input->stepvol = input->stepvol - decadimento_vol;
 		it++;
 	}
-	// printf("chiamo calcola f_min\n");
 	calcola_f_min(input->np, f_cur, &f_min, &ind_f_min);
-	// printf("post calcola f_min -- ind_f_min = %d\n", ind_f_min);
+	printf("ind_f_min = %d\n", ind_f_min);
 	//------- RETURN POS MIN ---------------
-	// xh punta all'inizio della riga
-	// input->xh = &input->x[ind_f_min*(n_coordinate_tot)];
 	input->xh = alloc_matrix(1, input->d);
 	for(int j = 0; j < input->d; j++)
 		input->xh[j] = input->x[ind_f_min*(input->d+input->padding_d)+j];
@@ -432,7 +418,7 @@ void mov_individuali(params* input, VECTOR deltaf, MATRIX deltax, MATRIX y, type
 void sposta_coordinate(MATRIX x, MATRIX y, int c, int c_tot, VECTOR deltaf, int pesce){
 	for(int coordinata = 0; coordinata < c; coordinata++){
 		if(deltaf[pesce] != 0.0)
-	    	x[(c_tot)*pesce+coordinata] = y[pesce*(c_tot)+coordinata];
+	    	x[pesce*(c_tot)+coordinata] = y[pesce*(c_tot)+coordinata];
 	}
 }
 
@@ -463,7 +449,7 @@ void calcola_val_f(VECTOR f_cur, params* input){// conviene il suo utilizzo solo
 
 	type x_2;
   	type c_x;
-	// #pragma omp parallel for num_threads(MAX_NUM_THREADS) private(x_2, c_x)
+	#pragma omp parallel for num_threads(MAX_NUM_THREADS) private(x_2, c_x)
 	for(int pesce = 0; pesce < n_pesci; pesce++){
 		calcola_val_f_asm_omp(&(input->x[pesce*n_coordinate_tot]), n_coordinate_tot, input->c, &x_2, &c_x);
 		f_cur[pesce] = exp(x_2) + x_2 - c_x;
