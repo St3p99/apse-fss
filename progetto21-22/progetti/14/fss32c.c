@@ -252,9 +252,12 @@ void fss(params* input){
 		it++;
 	}
 	calcola_f_min(input->np, f_cur, &f_min, &ind_f_min);
+	printf("ind_f_min = %d\n", ind_f_min);
 	//------- RETURN POS MIN ---------------
-	// xh punta all'inizio della riga
-	input->xh = &input->x[ind_f_min*(input->d)];
+	// input->xh = &input->x[ind_f_min*(input->d)];
+	input->xh = alloc_matrix(1, input->d);
+	for(int j = 0; j < input->d; j++)
+		input->xh[j] = input->x[ind_f_min*input->d+j];
 	if(!input->silent) printf("f_min = %f\n", f_min);
 }
 

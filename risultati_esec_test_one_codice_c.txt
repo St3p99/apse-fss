@@ -12,11 +12,12 @@ Volitive step [sv]: 0.012500
 Weight scale [w]: 1.250000
 Number of iterations [it]: 250
 f min iniziale = 1.035268
+ind_f_min = 21
 f_min = 0.996083
-FSS time = 0.011 secs
+FSS time = 0.016 secs
 
 Done.
-Total time = 18
+Total time = 68
 ERR = 0.001033
 timeout 100 ./fss32c -c ../../data/coeff32_125.ds2 -r ../../data/rand32_125_735_750.ds2 -x ../../data/x32_125_735.ds2 -np 735 -si 0.006 -sv 0.0008 -w 0.08 -it 750
 Coefficient file name: '../../data/coeff32_125.ds2'
@@ -29,11 +30,12 @@ Volitive step [sv]: 0.000800
 Weight scale [w]: 0.080000
 Number of iterations [it]: 750
 f min iniziale = 1.004068
+ind_f_min = 259
 f_min = 0.999668
-FSS time = 2.578 secs
+FSS time = 2.525 secs
 
 Done.
-Total time = 8531
+Total time = 6162
 ERR = 0.002263
 timeout 100 ./fss32c -c ../../data/coeff32_256.ds2 -r ../../data/rand32_256_768_1250.ds2 -x ../../data/x32_256_768.ds2 -np 768 -si 0.003 -sv 0.0004 -w 0.04 -it 1250
 Coefficient file name: '../../data/coeff32_256.ds2'
@@ -46,9 +48,10 @@ Volitive step [sv]: 0.000400
 Weight scale [w]: 0.040000
 Number of iterations [it]: 1250
 f min iniziale = 1.002131
+ind_f_min = 606
 f_min = 0.999847
-FSS time = 12.155 secs
+FSS time = 8.309 secs
 
 Done.
-Total time = 56310
+Total time = 40563
 ERR = 0.002354
