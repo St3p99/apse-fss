@@ -53,7 +53,7 @@
 #define	VECTOR		type*
 
 
-#define MAX_NUM_THREADS 4
+#define MAX_NUM_THREADS 7
 
 typedef struct {
 	MATRIX x; //posizione dei pesci
@@ -390,9 +390,10 @@ void fss(params* input){
 	// printf("post calcola f_min -- ind_f_min = %d\n", ind_f_min);
 	//------- RETURN POS MIN ---------------
 	// xh punta all'inizio della riga
-	input->xh = &input->x[ind_f_min*(n_coordinate_tot)];
-	// for(int j = 0; j < input->d; j++)
-	// 	input->xh[j] = input->x[ind_f_min*(n_coordinate_tot)+j];
+	// input->xh = &input->x[ind_f_min*(n_coordinate_tot)];
+	input->xh = alloc_matrix(1, input->d);
+	for(int j = 0; j < input->d; j++)
+		input->xh[j] = input->x[ind_f_min*(input->d+input->padding_d)+j];
 	if(!input->silent) printf("f_min = %f\n", f_min);
 }
 
