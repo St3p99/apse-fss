@@ -68,8 +68,7 @@ fine_for_blocco_coordinate:
     je  next_2
     
     movaps xmm0, [eax+ecx]
-    movaps xmm3,   [esi+ecx-p*dim*UNROLL_COORDINATE]
-    addps  xmm0,  xmm3
+    addps  xmm0,  [esi+ecx]
     movaps [eax+ecx],  xmm0 
 next_2:
         mov     ecx,    p*dim*UNROLL_COORDINATE         ; coordinata
@@ -98,8 +97,7 @@ fine_for_blocco_coordinate_2:
     je  next_3
     
     movaps xmm0, [eax+ecx]
-    movaps xmm3,   [esi+ecx-p*dim*UNROLL_COORDINATE]
-    addps  xmm0,  xmm3
+    addps  xmm0,  [esi+ecx]
     movaps [eax+ecx],  xmm0 
 next_3:
         mov     ecx,    p*dim*UNROLL_COORDINATE         ; coordinata
@@ -128,8 +126,7 @@ fine_for_blocco_coordinate_3:
     je  next_4
     
     movaps xmm0, [eax+ecx]
-    movaps xmm3,   [esi+ecx-p*dim*UNROLL_COORDINATE]
-    addps  xmm0,  xmm3
+    addps  xmm0,  [esi+ecx]
     movaps [eax+ecx],  xmm0 
 next_4:
         mov     ecx,    p*dim*UNROLL_COORDINATE          ; coordinata
@@ -158,8 +155,7 @@ fine_for_blocco_coordinate_4:
     je  next_pesci
     
     movaps xmm0, [eax+ecx]
-    movaps xmm3,   [esi+ecx-p*dim*UNROLL_COORDINATE]
-    addps  xmm0,  xmm3
+    addps  xmm0,  [esi+ecx]
     movaps [eax+ecx],  xmm0 
 ; fine for coordinate
 next_pesci:
@@ -200,8 +196,7 @@ fine_for_blocco_coordinate_extra:
     je  next_pesce
     
     movaps xmm0, [eax+ecx]
-    movaps xmm3,   [esi+ecx-p*dim*UNROLL_COORDINATE]
-    addps  xmm0,  xmm3
+    addps  xmm0,  [esi+ecx]
     movaps [eax+ecx],  xmm0 
 next_pesce:
     add     eax,  edx ; indirizzo riga prossimo pesce

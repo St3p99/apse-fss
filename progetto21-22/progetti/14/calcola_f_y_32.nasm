@@ -11,6 +11,8 @@ section .data
 section .bss
     alignb 16
 	np_meno_unroll resd 1
+	alignb 16
+	m resd p
 
 section .text
     global calcola_f_y_asm
@@ -91,13 +93,14 @@ for_blocco_coordinate:
 fine_blocco_coordinate:
 	cmp ecx, 0 
     je fine_coordinate
+
 ; gestione_coordinate_rimanenti
 	movaps xmm2, [ebx] ;y
-	movaps xmm5,xmm2 ; copia y
+	movaps xmm5, xmm2 ; copia y
 
-	movaps xmm3,[eax]; x
+	movaps xmm3, [eax]; x
 	
-	subps xmm5,xmm3 ; y-x	
+	subps xmm5,xmm3 ; y-x
 	movaps [edi], xmm5 ; y-x -> deltax
 	
 	movaps xmm4,[esi]; ci
@@ -450,6 +453,7 @@ for_blocco_coordinate_end:
 fine_blocco_coordinate_end:
 	cmp ecx, 0 
     je fine_coordinate_end
+
 ; gestione_coordinate_rimanenti
 	movaps xmm2, [ebx] ;y
 	movaps xmm5,xmm2 ; copia y

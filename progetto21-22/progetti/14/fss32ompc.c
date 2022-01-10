@@ -263,29 +263,39 @@ extern void mov_volitivo_asm_omp(VECTOR x, int d, type stepvol, VECTOR baricentr
 
 
 // METODI DI SUPPORTO
-void stampa_coordinate(params* input){
+void stampa_coordinate(params* input, int bool_print_padding){
 	if(input->silent) return;
+	int n_coordinate = input->d;
+	int n_coordinate_tot = n_coordinate + input->padding_d;
+	if(bool_print_padding){
+		n_coordinate = n_coordinate_tot;
+	}
 	for(int pesce = 0; pesce < input->np; pesce++){ //numero pesci
 		printf("x[%d] = [", pesce);	  
-		for(int coordinata = 0; coordinata < input->d+input->padding_d; coordinata++){ // coordinate pesce
-      		type val_coordinata = input->x[(input->d+input->padding_d)*(pesce)+coordinata];
+		for(int coordinata = 0; coordinata < n_coordinate - 1; coordinata++){ // coordinate pesce
+      		type val_coordinata = input->x[n_coordinate_tot*(pesce)+coordinata];
 			printf(" %f, ", val_coordinata);	  
 		}
-		type val_coordinata = input->x[(input->d+input->padding_d)*(pesce)];
-		printf(" %f]\n", input->x[(input->d+input->padding_d)*(pesce) + input->d - 1]);	  
+		type val_last_coordinata = input->x[n_coordinate_tot*(pesce)+n_coordinate - 1];
+		printf(" %f]\n", val_last_coordinata);	  
 	}
 }
 
-void stampa_matrice(params* input, MATRIX m, int r, int c){
+void stampa_matrice(params* input, MATRIX m, int r, int c, int bool_print_padding){
 	if(input->silent) return;
+	int n_coordinate = c;
+	int n_coordinate_tot = n_coordinate + input->padding_d;
+	if(bool_print_padding){
+		n_coordinate = n_coordinate_tot;
+	}
 	for(int i = 0; i < r; i++){ //numero pesci
 		printf("m[%d] = [", i);	  
-		for(int coordinata = 0; coordinata < c - 1; coordinata++){ // coordinate pesce
-      		type val_coordinata = m[(c+input->padding_d)*(i)+coordinata];
+		for(int coordinata = 0; coordinata < n_coordinate - 1; coordinata++){ // coordinate pesce
+      		type val_coordinata = m[(n_coordinate_tot)*(i)+coordinata];
 			printf(" %f, ", val_coordinata);	  
 		}
-		type val_coordinata = m[(c+input->padding_d)*(i)];
-		printf(" %f]\n", m[(c+input->padding_d)*(i) + c - 1]);	  
+		type val_last_coordinata = m[n_coordinate_tot*(i)+n_coordinate-1];
+		printf(" %f]\n", val_last_coordinata);	  
 	}
 }
 
@@ -357,19 +367,37 @@ void fss(params* input){
 	while (it < input->iter){
 		//-- calcolo nuove coordinate, deltaf, deltax, mindeltaf, --//
 		mov_individuali(input, deltaf, deltax, y, &mindeltaf, f_cur, f_y, &ind_r); // PRAMGA E ASM ALL'INTERNO 
+		//printf("post mov ind\n");
+		//stampa_coordinate(input, 1);
+		//printf("DELTA X\n");
+		//stampa_matrice(input, deltax, input->np, input->d, 1);
 		//-- aggiorna pesi dei pesci --//
 		if(mindeltaf < 0){ 
 			alimenta_asm_omp(n_pesci_tot, deltaf, pesi, mindeltaf);
+			//printf("post alimenta\n");
+			//stampa_coordinate(input, 1);
 			//-- esegui movimento istintivo --//
 			calcola_I_asm_omp(deltax, input->np, n_coordinate_tot, deltaf, I);
+			//printf("post calcola I\n");
+			//stampa_coordinate(input, 1);
+			//printf("VETTORE I\n");
+			//stampa_matrice(input, I, 1, input->d, 1);
 			mov_istintivo_asm_omp(input->x, input->np, n_coordinate_tot, I);
+			//printf("post mov ist\n");
+			//stampa_coordinate(input, 1);
 		}// else (mindeltaf >= 0) nessun pesce si è spostato durante il mov individuale
 		//-- calcola baricentro --//
 		baricentro_asm_omp(input->x, input->np, n_coordinate_tot, pesi, baricentro, &peso_tot_cur);
+		//printf("post baricentro\n");
+		//stampa_coordinate(input, 1);
 		//-- esegui movimento volitivo --/
 		mov_volitivo(input, baricentro, &peso_tot_old, &peso_tot_cur, &ind_r); // PRAGMA E ASM ALL'INTERNO		
+		//printf("post mov vol\n");
+		//stampa_coordinate(input, 1);
 		//-- aggiorna valori f_cur     --/
 		calcola_val_f(f_cur, input);  // PRAMGA E ASM ALL'INTERNO 
+		//printf("post calcola val f\n");
+		//stampa_coordinate(input, 1);
 		//-- aggiorna parametri --//
 		input->stepind = input->stepind - decadimento_ind;
 		input->stepvol = input->stepvol - decadimento_vol;

@@ -26,8 +26,8 @@ def dssave(ds, filename, dtype = 'f'):
 		array.array('I', [d, n]).tofile(datafile);
 		array.array(dtype, ds.reshape(np.prod(ds.shape))).tofile(datafile);
 
-d = 9; # 8 125 256
-nx = 21; # 64 735 768
+d = 737; # 8 125 256
+nx = 125; # 64 735 768
 iters = np.min([int(250*np.round(75*np.sqrt(d)/250,0)), int((2**31-1)/((nx*(d+1)+d)*8)/4)*4]); # 250 750 1250
 scale = np.power(10,-1*np.log10(d));
 

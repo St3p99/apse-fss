@@ -9,6 +9,8 @@ section .data
     
 
 section .bss
+	; alignb 16
+	; m resd p
 
 
 section .text
@@ -23,8 +25,8 @@ section .text
     c_y            equ     32
     
 	; DEBUG
-	msg	           db	    'ECCOCIIIII!!!!!!!!!',32,0
-    nl	           db	10,0
+	; msg	           db	    'ECCOCIIIII!!!!!!!!!',32,0
+    ; nl	           db	10,0
     ; prints msg
 	; prints nl
 
@@ -85,12 +87,15 @@ fine_blocco_coordinate:
     je fine_coordinate
 ; gestione_coordinate_rimanenti
 	movaps xmm2, [ebx] ;y
-	movaps xmm3,[eax]; x
+	movaps xmm5, xmm2 ; copia y
+
+	movaps xmm3, [eax]; x
 	
-	subps xmm5,xmm3 ; y-x	
+	subps xmm5,xmm3 ; y-x
 	movaps [edi], xmm5 ; y-x -> deltax
 	
 	movaps xmm4,[esi]; ci
+	
 	mulps xmm4,xmm2 ; ci*yi
 	addps xmm1,xmm4 ; tengo la somma parziale al fine di calcolare c*y tot
 
