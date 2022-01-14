@@ -246,12 +246,12 @@ void save_data(char* filename, void* X, int n, int k) {
 // extern void prova(params* input);
 extern void calcola_y_asm(MATRIX x, MATRIX y, int np, int d, int padding_d, type step_ind, VECTOR r);
 extern void calcola_f_y_asm(MATRIX x, MATRIX y, int np, int d, VECTOR deltax, VECTOR c, VECTOR y_quadro, VECTOR c_per_y);
-// extern void calcola_val_f_asm(MATRIX x, int np, int d, VECTOR c, VECTOR x_quadro, VECTOR c_per_x);
+extern void calcola_val_f_asm(MATRIX x, int np, int d, VECTOR c, VECTOR x_quadro, VECTOR c_per_x);
 extern void alimenta_asm(int np, VECTOR deltaf, VECTOR pesi, type mindeltaf);
-// extern void calcola_I_asm(VECTOR deltax, int np, int d, VECTOR deltaf, VECTOR I);
-// extern void mov_istintivo_asm(MATRIX x, int np, int d, VECTOR I);
+extern void calcola_I_asm(VECTOR deltax, int np, int d, VECTOR deltaf, VECTOR I);
+extern void mov_istintivo_asm(MATRIX x, int np, int d, VECTOR I);
 extern void baricentro_asm(MATRIX x, int np, int d, VECTOR pesi, VECTOR baricentro, type* peso_tot_cur);
-// extern void mov_volitivo_asm(MATRIX x, int np, int d, int padding_d, type stepvol, VECTOR baricentro, type direzione, VECTOR r);
+extern void mov_volitivo_asm(MATRIX x, int np, int d, int padding_d, type stepvol, VECTOR baricentro, type direzione, VECTOR r);
 
 
 // METODI DI SUPPORTO
@@ -346,7 +346,7 @@ void fss(params* input){
 	int ind_f_min;
 	int ind_r = 0;
 	//-- calcola val_f su coordinate iniziali x e inizializza f_min e ind_f_min
-	calcola_val_f(f_cur, input);
+	calcola_val_f(f_cur, input, x_quadro, c_per_x);
 	calcola_f_min(input->np, f_cur, &f_min, &ind_f_min);
 	if(!input->silent) printf("f min iniziale = %lf\n", f_min);
 	while (it < input->iter){
@@ -356,13 +356,17 @@ void fss(params* input){
 			//-- aggiorna pesi dei pesci --//
 			alimenta_asm(input->np+input->padding_np, deltaf, pesi, mindeltaf);
 			//-- esegui movimento istintivo --//
-			mov_istintivo(input, deltaf, deltax, I);
+			calcola_I_asm(deltax, input->np, input->d + input->padding_d, deltaf, I);
+			// mov_istintivo(input, deltaf, deltax, I);
+			mov_istintivo_asm(input->x, input->np, input->d + input->padding_d, I);
 		}
 		//-- calcola baricentro --//
 		baricentro_asm(input->x, input->np, input->d+input->padding_d, pesi, baricentro, &peso_tot_cur);
 		//-- esegui movimento volitivo --/
-		mov_volitivo(input, baricentro, &peso_tot_old, &peso_tot_cur, &ind_r);
-		calcola_val_f(f_cur, input);
+		// mov_volitivo(input, baricentro, &peso_tot_old, &peso_tot_cur, &ind_r);
+		mov_volitivo_asm(input->x, input->np, input->d, input->padding_d, input->stepvol, 
+					    baricentro, (peso_tot_old < peso_tot_cur) ? -1.0 : 1.0, &(input->r[ind_r]));
+		calcola_val_f(f_cur, input, x_quadro, c_per_x);
 		//-- aggiorna parametri --//
 		input->stepind = input->stepind - decadimento_ind;
 		input->stepvol = input->stepvol - decadimento_vol;
@@ -425,20 +429,30 @@ void mov_individuali(params* input, VECTOR deltaf, MATRIX deltax, MATRIX y, type
 }//mov_individuale
 
 
-void calcola_val_f(VECTOR f_cur, params* input){// conviene il suo utilizzo solo nell'inizializzazione
-  int n_pesci = input->np;
-  int pesce = 0;
-  int coordinata;
-  type val_f_pesce_cur;
+void calcola_val_f(VECTOR f_cur, params* input, VECTOR x_quadro, VECTOR c_per_x){// conviene il suo utilizzo solo nell'inizializzazione
+  	int n_pesci = input->np;
+	int n_coordinate_tot = input->d + input->padding_d;
 
-  calcola_f_pesce(input, pesce, &val_f_pesce_cur); // calcolo il valore della funzione del primo pesce per inizializzare i parametri  f_min e ind_f_min
-  f_cur[pesce] = val_f_pesce_cur;
+ 	calcola_val_f_asm(input->x, n_pesci, n_coordinate_tot, input->c, x_quadro, c_per_x);
+  	for(int pesce = 0; pesce < n_pesci; pesce++){
+    	f_cur[pesce] = exp(x_quadro[pesce]) + x_quadro[pesce] - c_per_x[pesce];
+  	}
+}//calcola_val_f
 
-  for(pesce = 1; pesce < n_pesci; pesce++){ //numero pesci, ovviamente escludi il primo che hai già calcolato
-	calcola_f_pesce(input, pesce, &val_f_pesce_cur);	
-    f_cur[pesce] = val_f_pesce_cur;
-  }//iterazione su tutti i pesci
-}//inizializza_val_f
+// void calcola_val_f(VECTOR f_cur, params* input){// conviene il suo utilizzo solo nell'inizializzazione
+//   int n_pesci = input->np;
+//   int pesce = 0;
+//   int coordinata;
+//   type val_f_pesce_cur;
+
+//   calcola_f_pesce(input, pesce, &val_f_pesce_cur); // calcolo il valore della funzione del primo pesce per inizializzare i parametri  f_min e ind_f_min
+//   f_cur[pesce] = val_f_pesce_cur;
+
+//   for(pesce = 1; pesce < n_pesci; pesce++){ //numero pesci, ovviamente escludi il primo che hai già calcolato
+// 	calcola_f_pesce(input, pesce, &val_f_pesce_cur);	
+//     f_cur[pesce] = val_f_pesce_cur;
+//   }//iterazione su tutti i pesci
+// }//inizializza_val_f
 
 void calcola_f_pesce(params* input, int pesce, type* ret){
 	int n_coordinate = input->d;
@@ -475,22 +489,22 @@ void mov_istintivo(params* input, VECTOR deltaf, VECTOR deltax, VECTOR I){
 	int n_coordinate = input->d;
 	int n_coordinate_tot = input->d+input->padding_d;
 	int pesce = 0;
-	type deltafsum = deltaf[pesce];
+	// type deltafsum = deltaf[pesce];
 	
-	for(int j=0; j < n_coordinate; j++){
-		I[j] = deltax[pesce*(n_coordinate_tot)+j]*(deltaf[pesce]); 
-	} // Inizializza I per il primo pesce
+	// for(int j=0; j < n_coordinate; j++){
+	// 	I[j] = deltax[pesce*(n_coordinate_tot)+j]*(deltaf[pesce]); 
+	// } // Inizializza I per il primo pesce
 	
-	for(pesce = 1; pesce < n_pesci; pesce++){
-		deltafsum += deltaf[pesce]; // calcola denominatore
-		for(int j=0; j < n_coordinate;j++){
-			I[j] += deltax[pesce*(n_coordinate_tot)+j]*(deltaf[pesce]); 
-		}
-	}
-	if( deltafsum == 0 ) return;
-	for(int j=0; j < n_coordinate; j++){
-		I[j] = I[j]/deltafsum;
-	}
+	// for(pesce = 1; pesce < n_pesci; pesce++){
+	// 	deltafsum += deltaf[pesce]; // calcola denominatore
+	// 	for(int j=0; j < n_coordinate;j++){
+	// 		I[j] += deltax[pesce*(n_coordinate_tot)+j]*(deltaf[pesce]); 
+	// 	}
+	// }
+	// if( deltafsum == 0 ) return;
+	// for(int j=0; j < n_coordinate; j++){
+	// 	I[j] = I[j]/deltafsum;
+	// }
 	for(int i = 0; i < n_pesci; i++){
 		for(int j = 0; j < n_coordinate; j++){
 			input->x[i*(n_coordinate_tot)+j] += I[j];
@@ -799,7 +813,7 @@ int main(int argc, char** argv) {
 	//
 	// Salva il risultato di xh
 	//
-	sprintf(fname, "xh32_%d_%d_%d.ds2", input->d, input->np, input->iter);
+	sprintf(fname, "xh64_%d_%d_%d.ds2", input->d, input->np, input->iter);
 	save_data(fname, input->xh, 1, input->d);
 	if(input->display){
 		if(input->xh == NULL)

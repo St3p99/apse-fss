@@ -169,7 +169,7 @@ fine_for_pesci:
     je  return
     
     addps   xmm6,   xmm5             ; somma parziale delta_f
-    mov     esi,    [ebp+vector_i] ; esi <- indirizzo vettore vector_i
+    ; mov     esi,    [ebp+vector_i] ; esi <- indirizzo vettore vector_i
 for_pesce:
     mov     ecx, p*dim*UNROLL_COORDINATE
 for_blocco_coordinate_extra:
