@@ -94,16 +94,16 @@ prova:
 
 		; esempio: stampa input->stepind
 		; RDI contiente l'indirizzo della struttura contenente i parametri
-		; [EDI]	input->x
-		; [EDI + 8] input->xh
-		; [EDI + 16] input->c
-		; [EDI + 24] input->r
-		; [EDI + 32] input->nx
-		; [EDI + 36] input->d
-		; [EDI + 40] input->iter
-		; [EDI + 48] input->stepind
-		; [EDI + 56] input->stepvol
-		; [EDI + 64] input->wscale
+		; [RDI]	input->x
+		; [RDI + 8] input->xh
+		; [RDI + 16] input->c
+		; [RDI + 24] input->r
+		; [RDI + 32] input->nx
+		; [RDI + 36] input->d
+		; [RDI + 40] input->iter
+		; [RDI + 48] input->stepind
+		; [RDI + 56] input->stepvol
+		; [RDI + 64] input->wscale
 		; ...
 		VMOVSD		XMM0, [RDI+48]
 		VMOVSD		[stepind], XMM0
