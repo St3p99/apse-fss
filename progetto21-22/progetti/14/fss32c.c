@@ -359,35 +359,21 @@ void fss(params* input){
 	while (it < input->iter){
 		//-- calcolo nuove coordinate, deltaf, deltax, mindeltaf, --//
 		mov_individuali(input, deltaf, deltax, y, &mindeltaf, f_cur, f_y, &ind_r, x_quadro, c_per_x);
-		//printf("post mov ind\n");
-		//stampa_coordinate(input, 1);
 		//-- aggiorna pesi dei pesci --//
 		if(mindeltaf < 0){ // mindeltaf >= 0 nessuno si è spostato nel mov individuale
 			alimenta_asm(input->np+input->padding_np, deltaf, pesi, mindeltaf);
-			//printf("post alimenta\n");
-			//stampa_coordinate(input, 1);
 			//-- esegui movimento istintivo --//
 			calcola_I_asm(deltax, input->np, input->d + input->padding_d, deltaf, I);
-			//printf("post calcola I\n");
-			//stampa_coordinate(input, 1);
 			mov_istintivo_asm(input->x, input->np, input->d + input->padding_d, I);
-			//printf("post mov ist\n");
-			//stampa_coordinate(input, 1);
 		}
 		//-- calcola baricentro --//
 		baricentro_asm(input->x, input->np, input->d+input->padding_d, pesi, baricentro, &peso_tot_cur);
-		//printf("post baricentro\n");
-		//stampa_coordinate(input, 1);
 		//-- esegui movimento volitivo --/
 		mov_volitivo_asm(input->x, input->np, input->d, input->padding_d, input->stepvol, 
 					    baricentro, (peso_tot_old < peso_tot_cur) ? -1.0 : 1.0, &(input->r[ind_r]));
-		//printf("post mov vol\n");
-		//stampa_coordinate(input, 1);
 		ind_r += input->np;
 		peso_tot_old = peso_tot_cur;
 		calcola_val_f(f_cur, input, x_quadro, c_per_x);
-		//printf("post calcola val f\n");
-		//stampa_coordinate(input, 1);
 		//-- aggiorna parametri --//
 		input->stepind = input->stepind - decadimento_ind;
 		input->stepvol = input->stepvol - decadimento_vol;
@@ -412,8 +398,6 @@ void mov_individuali(params* input, VECTOR deltaf, MATRIX deltax, MATRIX y, type
 	type copy_stepind = input->stepind;	
 	int spostati = 0; // conta il numero di pesci spostati;
 	calcola_y_asm(input->x, y, n_pesci, n_coordinate, padding_d, copy_stepind, &(input->r[*ind_r]));
-	// printf("MATRICE Y\n");
-	// stampa_matrice(input, y, input->np, input->d, 1);
 	*ind_r = *ind_r + n_pesci*n_coordinate;
 	calcola_f_y_asm(input->x, y, n_pesci, n_coordinate+padding_d, deltax, input->c, y_quadro, c_per_y);
 	for(int pesce = 0; pesce < n_pesci; pesce++){ // numero pesci
