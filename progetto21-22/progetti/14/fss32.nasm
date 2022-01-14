@@ -80,7 +80,7 @@ extern free_block
 
 global prova
 
-input		equ		8
+input		equ		8 ; input è una constante. input verrà sovrascritto con 8
 
 msg	db	'stepind:',32,0
 nl	db	10,0

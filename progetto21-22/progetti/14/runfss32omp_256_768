@@ -1,0 +1,11 @@
+#!/bin/bash
+if [[ ! -f sseutils32.nasm ]]; then cp ../../sseutils32.nasm .; fi;
+nasm -f elf32 sseutils32.nasm;
+for f in $(ls *32omp.nasm); do
+	nasm -f elf32 $f;
+done;
+gcc -m32 -msse -O0 -no-pie -fopenmp sseutils32.o *32omp.o fss32ompc.c -o fss32ompc -lm
+pars="-c ../../data/coeff32_256.ds2 -r ../../data/rand32_256_768_1250.ds2 -x ../../data/x32_256_768.ds2 -np 768 -si 0.003 -sv 0.0004 -w 0.04 -it $1 -d -s";
+# for arg; do pars=$pars" "$arg; done;
+echo $pars;
+./fss32ompc $pars

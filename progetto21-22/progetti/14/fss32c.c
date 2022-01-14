@@ -58,6 +58,11 @@ typedef struct {
 	VECTOR r; //numeri casuali
 	int np; //numero di pesci, quadrato del parametro np
 	int d; //numero di dimensioni del data set
+<<<<<<< HEAD
+=======
+	int padding_np; // numero di elementi di padding pesci
+	int padding_d;  // numero di elementi di padding coordinate
+>>>>>>> e591968bec5d829f66cb7c9e2379fd7f3c04ac79
 	int iter; //numero di iterazioni
 	type stepind; //parametro stepind
 	type stepvol; //parametro stepvol
@@ -139,6 +144,76 @@ MATRIX load_data(char* filename, int *n, int *k) {
 	return data;
 }
 
+<<<<<<< HEAD
+=======
+MATRIX load_coeff_padding(char* filename, int padding) {
+	FILE* fp;
+	int rows, cols, status, i;
+	
+	fp = fopen(filename, "rb");
+	
+	if (fp == NULL){
+		printf("'%s': bad data file name!\n", filename);
+		exit(0);
+	}
+	
+	status = fread(&cols, sizeof(int), 1, fp);
+	status = fread(&rows, sizeof(int), 1, fp);
+	MATRIX data = alloc_matrix(rows, cols+padding);
+	status = fread(data, sizeof(type), rows*cols, fp);
+	// padding
+	padding_vector(data, rows, padding);
+	fclose(fp);
+	
+	return data;
+}
+
+MATRIX load_x_padding(char* filename, int *n, int *k, int* padding_d) {
+	FILE* fp;
+	int rows, cols, status, i;
+	
+	fp = fopen(filename, "rb");
+	
+	if (fp == NULL){
+		printf("'%s': bad data file name!\n", filename);
+		exit(0);
+	}
+	
+	status = fread(&cols, sizeof(int), 1, fp);
+	status = fread(&rows, sizeof(int), 1, fp);
+	
+	MATRIX data;
+	int mul = 4;
+	int resto_col = cols % mul;
+	if( resto_col != 0 ){ // num_colonne non multiplo di mul (4)
+		*padding_d = (cols - resto_col + mul) - cols; // numero di zeri da aggiungere ad ogni riga
+		data = alloc_matrix(rows,cols + *padding_d);
+		int ptr = data;		
+		int n_cols_w_padding = cols + *padding_d; // numero di colonne considerando il padding
+		for(int i = 0; i < rows; i++){
+			// load riga
+			status = fread(ptr, sizeof(type), cols, fp);			
+			// padding con *padding_d zeri alla fine della riga
+			padding_vector(&data[i*(n_cols_w_padding)], cols, *padding_d);
+			// ptr punterà all'inizio della prossima riga
+			ptr += (n_cols_w_padding)*sizeof(type);
+		}
+	}
+	else{
+		// num_colonne multiplo di mul (4)
+		*padding_d = 0;
+		data = alloc_matrix(rows,cols);
+		status = fread(data, sizeof(type), rows*cols, fp);
+	}
+	fclose(fp);
+	
+	*n = rows;
+	*k = cols;
+	
+	return data;
+}
+
+>>>>>>> e591968bec5d829f66cb7c9e2379fd7f3c04ac79
 
 /*
 * 	save_data
@@ -161,7 +236,11 @@ void save_data(char* filename, void* X, int n, int k) {
 		fwrite(&n, 4, 1, fp);
 		for (i = 0; i < n; i++) {
 			fwrite(X, sizeof(type), k, fp);
+<<<<<<< HEAD
 			//printf("%i %i\n", ((int*)X)[0], ((int*)X)[1]);
+=======
+			// printf("%i %i\n", ((int*)X)[0], ((int*)X)[1]);
+>>>>>>> e591968bec5d829f66cb7c9e2379fd7f3c04ac79
 			X += sizeof(type)*k;
 		}
 	}
@@ -176,6 +255,7 @@ void save_data(char* filename, void* X, int n, int k) {
 // PROCEDURE ASSEMBLY
 
 // extern void prova(params* input);
+<<<<<<< HEAD
 
 // METODI DI SUPPORTO
 void stampa_coordinate(params* input){
@@ -188,6 +268,65 @@ void stampa_coordinate(params* input){
 		}
 		type val_coordinata = input->x[(input->d)*(pesce)];
 		printf(" %f]\n", input->x[(input->d)*(pesce) + input->d - 1]);	  
+=======
+extern void calcola_y_asm(MATRIX x, MATRIX y, int np, int d, int padding_d, type step_ind, VECTOR r);
+extern void calcola_f_y_asm(MATRIX x, MATRIX y, int np, int d, VECTOR deltax, VECTOR c, VECTOR y_quadro, VECTOR c_per_y);
+extern void calcola_val_f_asm(MATRIX x, int np, int d, VECTOR c, VECTOR x_quadro, VECTOR c_per_x);
+extern void alimenta_asm(int np, VECTOR deltaf, VECTOR pesi, type mindeltaf);
+extern void calcola_I_asm(VECTOR deltax, int np, int d, VECTOR deltaf, VECTOR I);
+extern void mov_istintivo_asm(MATRIX x, int np, int d, VECTOR I);
+extern void baricentro_asm(MATRIX x, int np, int d, VECTOR pesi, VECTOR baricentro, type* peso_tot_cur);
+extern void mov_volitivo_asm(MATRIX x, int np, int d, int padding_d, type stepvol, VECTOR baricentro, type direzione, VECTOR r);
+
+
+// METODI DI SUPPORTO
+void stampa_coordinate(params* input, int bool_print_padding){
+	if(input->silent) return;
+	int n_coordinate = input->d;
+	int n_coordinate_tot = n_coordinate + input->padding_d;
+	if(bool_print_padding){
+		n_coordinate = n_coordinate_tot;
+	}
+	for(int pesce = 0; pesce < input->np; pesce++){ //numero pesci
+		printf("x[%d] = [", pesce);	  
+		for(int coordinata = 0; coordinata < n_coordinate - 1; coordinata++){ // coordinate pesce
+      		type val_coordinata = input->x[n_coordinate_tot*(pesce)+coordinata];
+			printf(" %f, ", val_coordinata);	  
+		}
+		type val_last_coordinata = input->x[n_coordinate_tot*(pesce)+n_coordinate - 1];
+		printf(" %f]\n", val_last_coordinata);	  
+	}
+}
+
+void stampa_matrice(params* input, MATRIX m, int r, int c, int bool_print_padding){
+	if(input->silent) return;
+	int n_coordinate = c;
+	int n_coordinate_tot = n_coordinate + input->padding_d;
+	if(bool_print_padding){
+		n_coordinate = n_coordinate_tot;
+	}
+	for(int i = 0; i < r; i++){ //numero pesci
+		printf("m[%d] = [", i);	  
+		for(int coordinata = 0; coordinata < n_coordinate - 1; coordinata++){ // coordinate pesce
+      		type val_coordinata = m[(n_coordinate_tot)*(i)+coordinata];
+			printf(" %f, ", val_coordinata);	  
+		}
+		type val_last_coordinata = m[n_coordinate_tot*(i)+n_coordinate-1];
+		printf(" %f]\n", val_last_coordinata);	  
+	}
+}
+
+void padding_vector(VECTOR v, int n, int n_padding){
+	for(n_padding--; n_padding >= 0; n_padding--){
+		v[n+n_padding] = 0.0;
+	}
+}
+
+void padding_matrix(MATRIX m, int r, int c, int n_padding){
+	int cols_w_padding = c+n_padding;
+	for(int i = 0; i < r; i++){
+		padding_vector(&m[i*(cols_w_padding)], c, n_padding);
+>>>>>>> e591968bec5d829f66cb7c9e2379fd7f3c04ac79
 	}
 }
 
@@ -201,7 +340,12 @@ void fss(params* input){
 	// -------------------------------------------------
 	//-- inizializza peso Wi per ogni pesce i --//
 	// stampa_coordinate(input);
+<<<<<<< HEAD
 	VECTOR pesi = alloc_matrix(1, input->np);
+=======
+	VECTOR pesi = alloc_matrix(1, input->np+input->padding_np);
+	padding_vector(pesi, input->np, input->padding_np);
+>>>>>>> e591968bec5d829f66cb7c9e2379fd7f3c04ac79
 	int i;
 	for(i = 0; i < input->np; i++){
 		pesi[i] = input->wscale/2;
@@ -213,6 +357,7 @@ void fss(params* input){
 	type decadimento_ind = input->stepind/input->iter;
 	type decadimento_vol = input->stepvol/input->iter;
 
+<<<<<<< HEAD
 	VECTOR baricentro = alloc_matrix(1, input->d);
 	VECTOR I = alloc_matrix(1, input->d);
 	VECTOR f_cur = alloc_matrix(1, input->np);
@@ -246,6 +391,54 @@ void fss(params* input){
 		//-- esegui movimento volitivo --/
 		mov_volitivo(input, baricentro, &peso_tot_old, &peso_tot_cur, &ind_r);
 		calcola_val_f(f_cur, input);
+=======
+	VECTOR baricentro = alloc_matrix(1, input->d + input->padding_d);
+	padding_vector(baricentro, input->d, input->padding_d);
+	VECTOR I = alloc_matrix(1, input->d + input->padding_d);
+	padding_vector(I, input->d, input->padding_d);
+	VECTOR f_cur = alloc_matrix(1, input->np + input->padding_np);
+	padding_vector(f_cur, input->np, input->padding_np);
+    VECTOR f_y = alloc_matrix(1, input->np + input->padding_np);
+	padding_vector(f_y, input->np, input->padding_np);
+	VECTOR deltaf = alloc_matrix(1, input->np + input->padding_np);
+	padding_vector(deltaf, input->np, input->padding_np);
+	MATRIX deltax = alloc_matrix(input->np, input->d + input->padding_d);
+	padding_matrix(deltax, input->np, input->d, input->padding_d);
+	//-- allocazione matrix y per salvare le coordinate a seguito del mov. individuale --//
+	MATRIX y = alloc_matrix(input->np, input->d + input->padding_d);
+	padding_matrix(y, input->np, input->d, input->padding_d);
+	
+	VECTOR x_quadro= alloc_matrix(1, input->np);
+	VECTOR c_per_x = alloc_matrix(1, input->np);
+
+	type mindeltaf;
+	type deltafsum;
+	type f_min;
+	int ind_f_min;
+	int ind_r = 0;
+	//-- calcola val_f su coordinate iniziali x e inizializza f_min e ind_f_min
+	calcola_val_f(f_cur, input, x_quadro, c_per_x);
+	calcola_f_min(input->np, f_cur, &f_min, &ind_f_min);
+	if(!input->silent) printf("f min iniziale = %f\n", f_min);
+	while (it < input->iter){
+		//-- calcolo nuove coordinate, deltaf, deltax, mindeltaf, --//
+		mov_individuali(input, deltaf, deltax, y, &mindeltaf, f_cur, f_y, &ind_r, x_quadro, c_per_x);
+		//-- aggiorna pesi dei pesci --//
+		if(mindeltaf < 0){ // mindeltaf >= 0 nessuno si è spostato nel mov individuale
+			alimenta_asm(input->np+input->padding_np, deltaf, pesi, mindeltaf);
+			//-- esegui movimento istintivo --//
+			calcola_I_asm(deltax, input->np, input->d + input->padding_d, deltaf, I);
+			mov_istintivo_asm(input->x, input->np, input->d + input->padding_d, I);
+		}
+		//-- calcola baricentro --//
+		baricentro_asm(input->x, input->np, input->d+input->padding_d, pesi, baricentro, &peso_tot_cur);
+		//-- esegui movimento volitivo --/
+		mov_volitivo_asm(input->x, input->np, input->d, input->padding_d, input->stepvol, 
+					    baricentro, (peso_tot_old < peso_tot_cur) ? -1.0 : 1.0, &(input->r[ind_r]));
+		ind_r += input->np;
+		peso_tot_old = peso_tot_cur;
+		calcola_val_f(f_cur, input, x_quadro, c_per_x);
+>>>>>>> e591968bec5d829f66cb7c9e2379fd7f3c04ac79
 		//-- aggiorna parametri --//
 		input->stepind = input->stepind - decadimento_ind;
 		input->stepvol = input->stepvol - decadimento_vol;
@@ -254,14 +447,21 @@ void fss(params* input){
 	calcola_f_min(input->np, f_cur, &f_min, &ind_f_min);
 	printf("ind_f_min = %d\n", ind_f_min);
 	//------- RETURN POS MIN ---------------
+<<<<<<< HEAD
 	// input->xh = &input->x[ind_f_min*(input->d)];
 	input->xh = alloc_matrix(1, input->d);
 	for(int j = 0; j < input->d; j++)
 		input->xh[j] = input->x[ind_f_min*input->d+j];
+=======
+	input->xh = alloc_matrix(1, input->d);
+	for(int j = 0; j < input->d; j++)
+		input->xh[j] = input->x[ind_f_min*(input->d+input->padding_d)+j];
+>>>>>>> e591968bec5d829f66cb7c9e2379fd7f3c04ac79
 	if(!input->silent) printf("f_min = %f\n", f_min);
 }
 
 // MOVIMENTO INDIVIDUALE
+<<<<<<< HEAD
 void mov_individuali(params* input, VECTOR deltaf, MATRIX deltax, MATRIX y, type* mindeltaf, VECTOR f_cur, VECTOR f_y, int* ind_r){
   int n_pesci = input->np;
   int n_coordinate = input->d;
@@ -344,11 +544,73 @@ void calcola_val_f(VECTOR f_cur, params* input){// conviene il suo utilizzo solo
 
 void calcola_f_pesce(params* input, int pesce, type* ret){
 	int n_coordinate = input->d;
+=======
+void mov_individuali(params* input, VECTOR deltaf, MATRIX deltax, MATRIX y, type* mindeltaf, VECTOR f_cur, 
+						VECTOR f_y, int* ind_r, VECTOR y_quadro, VECTOR c_per_y){
+	int n_pesci = input->np;
+	int n_coordinate = input->d;
+	int padding_d = input->padding_d;
+	*mindeltaf = 1; // inizializzazione fittizia
+	type copy_stepind = input->stepind;	
+	int spostati = 0; // conta il numero di pesci spostati;
+	calcola_y_asm(input->x, y, n_pesci, n_coordinate, padding_d, copy_stepind, &(input->r[*ind_r]));
+	*ind_r = *ind_r + n_pesci*n_coordinate;
+	calcola_f_y_asm(input->x, y, n_pesci, n_coordinate+padding_d, deltax, input->c, y_quadro, c_per_y);
+	for(int pesce = 0; pesce < n_pesci; pesce++){ // numero pesci
+	    f_y[pesce] = exp(y_quadro[pesce]) + y_quadro[pesce] - c_per_y[pesce];
+		if(f_y[pesce] >= f_cur[pesce]){ // la posizione non è migliore
+			deltaf[pesce] = 0.0; 
+	  	}  // se il pesce non migliora non viene spostato
+		else{ // il pesce ha acquisito una posizione migliore
+			spostati++;
+	    	deltaf[pesce] = f_y[pesce] - f_cur[pesce];
+	    	if(deltaf[pesce] < *mindeltaf ) *mindeltaf = deltaf[pesce]; //aggiorno il minimo deltaf
+	  		f_cur[pesce] = f_y[pesce]; // il nuovo valore del pesce
+	  	}// else
+	}//for
+ 	if( spostati >= n_pesci/2 ){ // sono maggiori i pesci che si sono spostati, quindi mi conviene sovrascrivere y con i pesci che non si sono spostati
+		for(int pesce = 0; pesce < n_pesci; pesce++){ // se i pesci non si sono spostati deltaf = 0
+	    	if(deltaf[pesce] == 0){ // se il pesce non si è spostato (deltaf = 0)
+	        	for(int coordinata = 0; coordinata < n_coordinate; coordinata++){
+	            	y[(n_coordinate+padding_d)*pesce+coordinata] = input->x[(n_coordinate+padding_d)*pesce+coordinata];
+	        	}//tutte le coordinate di quel pesce	
+	    	}//if 	
+		}//for	
+	  	int tmp = (int) input->x;
+		input->x = y;
+	  	y = (float *) tmp;
+	}//if spostati >= rimasti	
+	else{ // sono maggiori i pesci che non si sono spostati
+		for(int pesce = 0; pesce < n_pesci; pesce++){ // se i pesci si sono spostati deltaf è diverso da 0
+	    	if(deltaf[pesce] != 0){
+	        	for(int coordinata = 0; coordinata < n_coordinate; coordinata++){
+	            	input->x[(n_coordinate+padding_d)*pesce+coordinata] = y[(n_coordinate+padding_d)*pesce+coordinata];
+	        	}//tutte le coordinate di quel pesce	
+	    	}//if 	
+		}//for	
+	}//else
+}//mov_individuale
+
+void calcola_val_f(VECTOR f_cur, params* input, VECTOR x_quadro, VECTOR c_per_x){// conviene il suo utilizzo solo nell'inizializzazione
+  	int n_pesci = input->np;
+	int n_coordinate_tot = input->d + input->padding_d;
+
+ 	calcola_val_f_asm(input->x, n_pesci, n_coordinate_tot, input->c, x_quadro, c_per_x);
+  	for(int pesce = 0; pesce < n_pesci; pesce++){
+    	f_cur[pesce] = exp(x_quadro[pesce]) + x_quadro[pesce] - c_per_x[pesce];
+  	}
+}//calcola_val_f
+
+void calcola_f_pesce(params* input, int pesce, type* ret){
+	int n_coordinate = input->d;
+	int padding_d = input->padding_d;
+>>>>>>> e591968bec5d829f66cb7c9e2379fd7f3c04ac79
 	type val_i; 
   	type coef_i;
 	type x_quadro = 0.0;
   	type c_per_x = 0.0;
 	  
+<<<<<<< HEAD
 	for(int i = 0; i < n_coordinate; i++){ // coordinate pesce
       //rappresentazione per righe della matrice quindi A[i,j] -> A[n*i+j] dove n indica il numero di collone
       val_i = input->x[pesce*(n_coordinate)+i]; //valore coordinata
@@ -459,6 +721,18 @@ void numeratore_baricentro ( params* input, VECTOR pesi, VECTOR numeratore ){
 	}
 }
 
+=======
+	for(int i = 0; i < n_coordinate; i++){
+      val_i = input->x[pesce*(n_coordinate+padding_d)+i];
+      coef_i = input->c[i];
+
+      x_quadro += (val_i*val_i);
+      c_per_x += (val_i*coef_i);
+    }
+    *ret = exp(x_quadro) + x_quadro - c_per_x;
+}
+
+>>>>>>> e591968bec5d829f66cb7c9e2379fd7f3c04ac79
 void calcola_f_min(int n_pesci, VECTOR f_cur, type* f_min, int* ind_f_min){
 	int pesce = 0;
 	*f_min = f_cur[pesce];
@@ -622,11 +896,24 @@ int main(int argc, char** argv) {
 		exit(1);
 	}
 
+<<<<<<< HEAD
 
 	int x,y;
 	input->c = load_data(coefffilename, &input->d, &y);
 	input->r = load_data(randfilename, &x, &y);
 	input->x = load_data(xfilename, &x, &y);
+=======
+	int x,y;
+	int mul = 4;
+	int resto_righe = input->np % mul;
+	input->padding_np = 0;
+	if( resto_righe != 0)
+		input->padding_np = (input->np - resto_righe + mul) - input->np;
+
+	input->r = load_data(randfilename, &x, &y); // no padding
+	input->x = load_x_padding(xfilename, &x, &input->d, &input->padding_d);
+	input->c = load_coeff_padding(coefffilename, input->padding_d);
+>>>>>>> e591968bec5d829f66cb7c9e2379fd7f3c04ac79
 
 	if(input->np < 0){
 		printf("Invalid value of np parameter!\n");

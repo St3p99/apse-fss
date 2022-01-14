@@ -1,0 +1,9 @@
+#!/bin/bash
+for f in $(ls ./*32.nasm); do
+	nasm -f elf32 $f;
+done;
+gcc -w -m32 -msse -O0 -no-pie ./*32.o fss32c.c -o fss32c -lm;
+pars="-c ../../data/coeff32_125.ds2 -r ../../data/rand32_125_768_750.ds2 -x ../../data/x32_125_768.ds2 -np 768 -si 0.006 -sv 0.0008 -w 0.08 -it 750 -d";
+# for arg; do pars=$pars" "$arg; done;
+echo $pars;
+./fss32c $pars

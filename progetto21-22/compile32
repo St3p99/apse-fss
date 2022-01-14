@@ -4,4 +4,4 @@ nasm -f elf32 sseutils32.nasm;
 for f in $(ls *32.nasm); do
 	nasm -f elf32 $f;
 done;
-gcc -m32 -msse -O0 -no-pie *32.o fss32c.c -o fss32c -lm
+gcc -w -m32 -msse -O0 -no-pie *32.o fss32c.c -o fss32c -lm
