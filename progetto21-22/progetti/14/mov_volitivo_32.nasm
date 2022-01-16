@@ -86,6 +86,7 @@ fine_for_distanza:
     je  next_coordinate
 for_sing_distanza:
     movss xmm0, [eax+ecx]    
+    subss xmm0,  [ebx+ecx]     
     mulss  xmm0, xmm0
     addss  xmm2, xmm0
 
@@ -186,6 +187,7 @@ fine_for_distanza_2:
     je  next_coordinate_2
 for_sing_distanza_2:
     movss xmm0, [eax+ecx]    
+    subss xmm0,  [ebx+ecx]     
     mulss  xmm0, xmm0
     addss  xmm2, xmm0
 
@@ -283,7 +285,8 @@ fine_for_distanza_3:
     cmp ecx, edx
     je  next_coordinate_3
 for_sing_distanza_3:
-    movss xmm0, [eax+ecx]    
+    movss xmm0, [eax+ecx]   
+    subss xmm0,  [ebx+ecx]      
     mulss  xmm0, xmm0
     addss  xmm2, xmm0
 
@@ -383,6 +386,7 @@ fine_for_distanza_4:
     je  next_coordinate_4
 for_sing_distanza_4:
     movss xmm0, [eax+ecx]    
+    subss xmm0,  [ebx+ecx]     
     mulss  xmm0, xmm0
     addss  xmm2, xmm0
 
@@ -490,7 +494,8 @@ fine_for_distanza_extra:
     cmp ecx, edx
     je  next_coordinate_extra
 for_sing_distanza_extra:
-    movss xmm0, [eax+ecx]    
+    movss xmm0, [eax+ecx]   
+    subss xmm0,  [ebx+ecx]      
     mulss  xmm0, xmm0
     addss  xmm2, xmm0
 

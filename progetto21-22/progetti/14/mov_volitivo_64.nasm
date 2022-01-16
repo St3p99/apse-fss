@@ -50,7 +50,6 @@ mov_volitivo_asm:
     ; ymm0 <- [stepvol*direzione, stepvol*direzione, stepvol*direzione, stepvol*direzione]
     vmulpd  ymm0, [v_meno_uno]
     ; ymm0 <- [-stepvol*direzione, -stepvol*direzione, -stepvol*direzione, -stepvol*direzione]
-    
 for_pesci:
     cmp     rsi, UNROLL_PESCI ; pesce i-esimo < 0
     jl      fine_for_pesci
@@ -72,6 +71,8 @@ for_distanza:
         vmulpd  ymm1, ymm1
 
         vaddpd  ymm2, ymm7
+        vmovapd [m], ymm2
+
         vaddpd  ymm3, ymm1
 
         add     r10,    p*dim*UNROLL_COORDINATE
@@ -82,8 +83,11 @@ fine_for_distanza:
     je  next_coordinate
 for_sing_distanza:
     vmovsd xmm7, [rdi+r10]    
+    vsubsd xmm7, [r8+r10]     
     vmulsd xmm7, xmm7
-    vaddsd xmm2, xmm7
+    ; xmm7 -> [0, 0, 0, valore] dato che la mov azzera il resto di xmm7
+    ; quindi possiamo fare la add packed tra ymm2 e ymm7
+    vaddpd ymm2, ymm7  
 
     add r10, dim
     cmp r10, rdx
@@ -93,9 +97,8 @@ next_coordinate:
 	VPERM2F128 ymm15, ymm2, ymm2, 00000001b
 	vhaddpd ymm2, ymm15, ymm2
 	vhaddpd ymm2, ymm2, ymm2
-    
     vsqrtpd ymm2, ymm2 ; distanza euclidea 
-    
+   
     mov     r10,    p*dim*UNROLL_COORDINATE                ; coordinata
 
     vmovupd   ymm5,   [r9]            ; ri
@@ -177,9 +180,10 @@ fine_for_distanza_2:
     cmp r10, rdx
     je  next_coordinate_2
 for_sing_distanza_2:
-    vmovsd  xmm7, [rdi+r10]    
-    vmulsd  xmm7, xmm7
-    vaddsd  xmm2, xmm7
+    vmovsd xmm7, [rdi+r10]    
+    vsubsd xmm7, [r8+r10]     
+    vmulsd xmm7, xmm7
+    vaddpd ymm2, ymm7
 
     add r10, dim
     cmp r10, rdx
@@ -271,9 +275,10 @@ fine_for_distanza_3:
     cmp r10, rdx
     je  next_coordinate_3
 for_sing_distanza_3:
-    vmovsd  xmm7, [rdi+r10]    
-    vmulsd  xmm7, xmm7
-    vaddsd  xmm2, xmm7
+    vmovsd xmm7, [rdi+r10]    
+    vsubsd xmm7, [r8+r10]     
+    vmulsd xmm7, xmm7
+    vaddpd ymm2, ymm7
 
     add r10, dim
     cmp r10, rdx
@@ -365,9 +370,10 @@ fine_for_distanza_4:
     cmp r10, rdx
     je  next_coordinate_4
 for_sing_distanza_4:
-    vmovsd  xmm7, [rdi+r10]    
-    vmulsd  xmm7, xmm7
-    vaddsd  xmm2, xmm7
+    vmovsd xmm7, [rdi+r10]    
+    vsubsd xmm7, [r8+r10]     
+    vmulsd xmm7, xmm7
+    vaddpd ymm2, ymm7
 
     add r10, dim
     cmp r10, rdx
@@ -440,7 +446,6 @@ fine_for_pesci:
     cmp rsi, 0
     je  return
 
-
 for_pesce:
     mov     r10, p*dim*UNROLL_COORDINATE
 
@@ -469,9 +474,10 @@ fine_for_distanza_extra:
     cmp r10, rdx
     je  next_coordinate_extra
 for_sing_distanza_extra:
-    vmovsd  xmm7, [rdi+r10]    
-    vmulsd  xmm7, xmm7
-    vaddsd  xmm2, xmm7
+    vmovsd xmm7, [rdi+r10]    
+    vsubsd xmm7, [r8+r10]     
+    vmulsd xmm7, xmm7
+    vaddpd ymm2, ymm7
 
     add r10, dim
     cmp r10, rdx

@@ -4,7 +4,7 @@
 * Corso di Architetture e Programmazione dei Sistemi di Elaborazione - a.a. 2020/21
 * 
 * Progetto dell'algoritmo Fish School Search 221 231 a
-* in linguaggio assembly x86-32 + SSE
+* in linguaggio assembly x86-64 + SSE
 * 
 * Fabrizio Angiulli, aprile 2019
 * 
@@ -26,16 +26,16 @@
 * 
 * potrebbe essere necessario installare le seguenti librerie:
 * 
-*    sudo apt-get install lib32gcc-4.8-dev (o altra versione)
+*    sudo apt-get install lib64gcc-4.8-dev (o altra versione)
 *    sudo apt-get install libc6-dev-i386
 * 
 * Per generare il file eseguibile:
 * 
-* nasm -f elf32 fss32.nasm && gcc -m32 -msse -O0 -no-pie sseutils32.o fss32.o fss32c.c -o fss32c -lm && ./fss32c $pars
+* nasm -f elf64 fss64.nasm && gcc -m64 -msse -O0 -no-pie sseutils64.o fss64.o fss64c.c -o fss64c -lm && ./fss64c $pars
 * 
 * oppure
 * 
-* ./runfss32
+* ./runfss64
 * 
 */
 
@@ -48,7 +48,7 @@
 #include <xmmintrin.h>
 #include <omp.h>
 
-#define	type		float
+#define	type		double
 #define	MATRIX		type*
 #define	VECTOR		type*
 
@@ -75,9 +75,9 @@ typedef struct {
 /*
 * 
 *	Le funzioni sono state scritte assumento che le matrici siano memorizzate 
-* 	mediante un array (float*), in modo da occupare un unico blocco
+* 	mediante un array (double*), in modo da occupare un unico blocco
 * 	di memoria, ma a scelta del candidato possono essere 
-* 	memorizzate mediante array di array (float**).
+* 	memorizzate mediante array di array (double**).
 * 
 * 	In entrambi i casi il candidato dovr� inoltre scegliere se memorizzare le
 * 	matrici per righe (row-major order) o per colonne (column major-order).
@@ -87,7 +87,7 @@ typedef struct {
 */
 
 void* get_block(int size, int elements) { 
-	return _mm_malloc(elements*size,16); 
+	return _mm_malloc(elements*size, 32); 
 }
 
 void free_block(void* p) { 
@@ -113,7 +113,7 @@ void dealloc_matrix(MATRIX mat) {
 * 	Codifica del file:
 * 	primi 4 byte: numero di righe (N) --> numero intero
 * 	successivi 4 byte: numero di colonne (M) --> numero intero
-* 	successivi N*M*4 byte: matrix data in row-major order --> numeri floating-point a precisione singola
+* 	successivi N*M*4 byte: matrix data in row-major order --> numeri doubleing-point a precisione singola
 * 
 *****************************************************************************
 *	Se lo si ritiene opportuno, � possibile cambiare la codifica in memoria
@@ -221,9 +221,9 @@ MATRIX load_x_padding(char* filename, int *n, int *k, int* padding_d) {
 *	come matrice di N righe e M colonne
 * 
 * 	Codifica del file:
-* 	primi 4 byte: numero di righe (N) --> numero intero a 32 bit
-* 	successivi 4 byte: numero di colonne (M) --> numero intero a 32 bit
-* 	successivi N*M*4 byte: matrix data in row-major order --> numeri interi o floating-point a precisione singola
+* 	primi 4 byte: numero di righe (N) --> numero intero a 64 bit
+* 	successivi 4 byte: numero di colonne (M) --> numero intero a 64 bit
+* 	successivi N*M*4 byte: matrix data in row-major order --> numeri interi o doubleing-point a precisione singola
 */
 void save_data(char* filename, void* X, int n, int k) {
 	FILE* fp;
@@ -249,14 +249,14 @@ void save_data(char* filename, void* X, int n, int k) {
 // PROCEDURE ASSEMBLY
 
 // extern void prova(params* input);
-extern void calcola_y_asm_omp(VECTOR x, VECTOR y, int d, type step_ind, VECTOR r); // singolo pesce PERNA
+extern void calcola_y_asm_omp(VECTOR x, VECTOR y, int d, type step_ind, VECTOR r); // singolo pesce
 
-extern void calcola_f_y_asm_omp(VECTOR x, VECTOR y, int d, VECTOR deltax, VECTOR c, type* y_2, type* c_y); // singolo pesce MORRONE 32 e omp ara diritta
-extern void calcola_val_f_asm_omp(VECTOR x, int d, VECTOR c, type* x_2, type* c_x); // singolo pesce MANGIONE
+extern void calcola_f_y_asm_omp(VECTOR x, VECTOR y, int d, VECTOR deltax, VECTOR c, type* y_2, type* c_y); // singolo pesce
+extern void calcola_val_f_asm_omp(VECTOR x, int d, VECTOR c, type* x_2, type* c_x); // singolo pesce
 
 extern void alimenta_asm_omp(int np, VECTOR deltaf, VECTOR pesi, type mindeltaf); // tutti i pesci
 extern void calcola_I_asm_omp(VECTOR deltax, int np, int d, VECTOR deltaf, VECTOR I); // tutti i pesci
-extern void mov_istintivo_asm_omp(MATRIX x, int d, VECTOR I); // tutti i pesci
+extern void mov_istintivo_asm_omp(MATRIX x, int d, VECTOR I); // singolo pesce
 extern void baricentro_asm_omp(MATRIX x, int np, int d, VECTOR pesi, VECTOR baricentro, type* peso_tot_cur); // tutti i pesci
 
 extern void mov_volitivo_asm_omp(VECTOR x, int d, type stepvol, VECTOR baricentro, type direzione, VECTOR r); // singolo pesce
@@ -317,19 +317,13 @@ void fss(params* input){
 	// -------------------------------------------------
 	// Codificare qui l'algoritmo Fish Search School
 	// -------------------------------------------------
-	// NOTA: inizializzazione matrix x fatta nel main
-	// 		 leggendo posizioni da file x32_8_64.ds2
-	// -------------------------------------------------
-	//-- inizializza peso Wi per ogni pesce i --//
-	// stampa_coordinate(input);
 	VECTOR pesi = alloc_matrix(1, input->np+input->padding_np);
 	padding_vector(pesi, input->np, input->padding_np);
-
 	#pragma omp parallel for num_threads(MAX_NUM_THREADS)
 	for(int i = 0; i < input->np; i++){
 		pesi[i] = input->wscale/2;
 	}
-	// -------------------------------------------------
+	
 	int it = 0;
 	type peso_tot_cur = (input -> wscale/2)*(input -> np);
 	type peso_tot_old = peso_tot_cur;
@@ -348,7 +342,6 @@ void fss(params* input){
 	padding_vector(deltaf, input->np, input->padding_np);
 	MATRIX deltax = alloc_matrix(input->np, input->d + input->padding_d);
 	padding_matrix(deltax, input->np, input->d, input->padding_d);
-	//-- allocazione matrix y per salvare le coordinate a seguito del mov. individuale --//
 	MATRIX y = alloc_matrix(input->np, input->d + input->padding_d);
 	padding_matrix(y, input->np, input->d, input->padding_d);
 
@@ -360,42 +353,25 @@ void fss(params* input){
 	int n_pesci_tot      = input->np+input->padding_np;
 	int n_coordinate_tot = input->d+input->padding_d;
 
-	//-- calcola val_f su coordinate iniziali x e inizializza f_min e ind_f_min
-	calcola_val_f(f_cur, input);  // PRAMGA E ASM ALL'INTERNO 
+	calcola_val_f(f_cur, input);
 	calcola_f_min(input->np, f_cur, &f_min, &ind_f_min);
 	if(!input->silent) printf("f min iniziale = %f\n", f_min);
 	while (it < input->iter){
 		//-- calcolo nuove coordinate, deltaf, deltax, mindeltaf, --//
-		mov_individuali(input, deltaf, deltax, y, &mindeltaf, f_cur, f_y, &ind_r); // PRAMGA E ASM ALL'INTERNO 
-		//printf("post mov ind\n");
-		//stampa_coordinate(input, 1);
-		//printf("DELTA X\n");
-		//stampa_matrice(input, deltax, input->np, input->d, 1);
-		//-- aggiorna pesi dei pesci --//
+		mov_individuali(input, deltaf, deltax, y, &mindeltaf, f_cur, f_y, &ind_r);
 		if(mindeltaf < 0){ 
+			//-- aggiorna pesi dei pesci --//
 			alimenta_asm_omp(n_pesci_tot, deltaf, pesi, mindeltaf);
-			//printf("post alimenta\n");
-			//stampa_coordinate(input, 1);
 			//-- esegui movimento istintivo --//
 			calcola_I_asm_omp(deltax, input->np, n_coordinate_tot, deltaf, I);
-			//stampa_coordinate(input, 1);
-			//printf("VETTORE I\n");
-			//stampa_matrice(input, I, 1, input->d, 1);
 			mov_istintivo(input, I);
-			//stampa_coordinate(input, 1);
 		}// else (mindeltaf >= 0) nessun pesce si è spostato durante il mov individuale
 		//-- calcola baricentro --//
 		baricentro_asm_omp(input->x, input->np, n_coordinate_tot, pesi, baricentro, &peso_tot_cur);
-		//printf("post baricentro\n");
-		//stampa_coordinate(input, 1);
 		//-- esegui movimento volitivo --/
-		mov_volitivo(input, baricentro, &peso_tot_old, &peso_tot_cur, &ind_r); // PRAGMA E ASM ALL'INTERNO		
-		//printf("post mov vol\n");
-		//stampa_coordinate(input, 1);
+		mov_volitivo(input, baricentro, &peso_tot_old, &peso_tot_cur, &ind_r);
 		//-- aggiorna valori f_cur     --/
-		calcola_val_f(f_cur, input);  // PRAMGA E ASM ALL'INTERNO 
-		//printf("post calcola val f\n");
-		//stampa_coordinate(input, 1);
+		calcola_val_f(f_cur, input);
 		//-- aggiorna parametri --//
 		input->stepind = input->stepind - decadimento_ind;
 		input->stepvol = input->stepvol - decadimento_vol;
@@ -420,7 +396,6 @@ void mov_individuali(params* input, VECTOR deltaf, MATRIX deltax, MATRIX y, type
 	
 	#pragma omp parallel for num_threads(MAX_NUM_THREADS)
 	for(int pesce = 0; pesce < n_pesci; pesce++){ // numero pesci	
-			// mov_individuale_pesce(input, deltax, y, pesce, *ind_r+pesce*n_coordinate, &(f_y[pesce]));
 			type y_2;
 			type c_y;
 			calcola_y_asm_omp(
@@ -472,9 +447,8 @@ void calcola_val_f(VECTOR f_cur, params* input){// conviene il suo utilizzo solo
 
 void mov_istintivo(params* input, VECTOR I){
 	int n_coordinate_tot = input->d + input->padding_d;
-	// #pragma omp parallel for num_threads(MAX_NUM_THREADS)
+	#pragma omp parallel for num_threads(MAX_NUM_THREADS)
 	for(int pesce = 0; pesce < input->np; pesce++){
-		// printf("pesce = %d\n", pesce);
 		mov_istintivo_asm_omp(&(input->x[pesce*n_coordinate_tot]), n_coordinate_tot, I);
 	}
 }
@@ -733,7 +707,7 @@ int main(int argc, char** argv) {
 	//
 	// Salva il risultato di xh
 	//
-	sprintf(fname, "xh32_%d_%d_%d.ds2", input->d, input->np, input->iter);
+	sprintf(fname, "xh64_%d_%d_%d.ds2", input->d, input->np, input->iter);
 	save_data(fname, input->xh, 1, input->d);
 	if(input->display){
 		if(input->xh == NULL)
