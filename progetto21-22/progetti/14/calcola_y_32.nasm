@@ -1,11 +1,11 @@
 %include 'sseutils32.nasm'
 
 section .data
-    dim		 equ		4       ; dimensione operandi float (4byte)
-    p		 equ		4       ; packed (4 elementi alla volta)
-    zero     equ     0
+    dim		equ		4       ; dimensione operandi float (4byte)
+    p		equ		4       ; packed (4 elementi alla volta)
+    zero    equ     0
     meno_uno equ    -1
-    tre      equ     3
+    tre     equ     3
     UNROLL_PESCI        	equ		4
     UNROLL_COORDINATE		equ		2
     align 16

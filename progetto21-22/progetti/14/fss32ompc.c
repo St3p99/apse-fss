@@ -187,15 +187,15 @@ MATRIX load_x_padding(char* filename, int *n, int *k, int* padding_d) {
 	if( resto_col != 0 ){ // num_colonne non multiplo di mul (4)
 		*padding_d = (cols - resto_col + mul) - cols; // numero di zeri da aggiungere ad ogni riga
 		data = alloc_matrix(rows,cols + *padding_d);
-		// int ptr = (int) data;		
+		int ptr = (int) data;		
 		int n_cols_w_padding = cols + *padding_d; // numero di colonne considerando il padding
 		for(int i = 0; i < rows; i++){
 			// load riga
-			status = fread( &data[i*(n_cols_w_padding)], sizeof(type), cols, fp);			
+			status = fread( (void*) ptr, sizeof(type), cols, fp);			
 			// padding con *padding_d zeri alla fine della riga
 			padding_vector(&data[i*(n_cols_w_padding)], cols, *padding_d);
 			// ptr punterà all'inizio della prossima riga
-			// ptr += (n_cols_w_padding)*sizeof(type);
+			ptr += (n_cols_w_padding)*sizeof(type);
 		}
 	}
 	else{
@@ -256,7 +256,7 @@ extern void calcola_val_f_asm_omp(VECTOR x, int d, VECTOR c, type* x_2, type* c_
 
 extern void alimenta_asm_omp(int np, VECTOR deltaf, VECTOR pesi, type mindeltaf); // tutti i pesci
 extern void calcola_I_asm_omp(VECTOR deltax, int np, int d, VECTOR deltaf, VECTOR I); // tutti i pesci
-extern void mov_istintivo_asm_omp(MATRIX x, int d, VECTOR I); // tutti i pesci
+extern void mov_istintivo_asm_omp(MATRIX x, int np, int d, VECTOR I); // tutti i pesci
 extern void baricentro_asm_omp(MATRIX x, int np, int d, VECTOR pesi, VECTOR baricentro, type* peso_tot_cur); // tutti i pesci
 
 extern void mov_volitivo_asm_omp(VECTOR x, int d, type stepvol, VECTOR baricentro, type direzione, VECTOR r); // singolo pesce
@@ -378,10 +378,12 @@ void fss(params* input){
 			//stampa_coordinate(input, 1);
 			//-- esegui movimento istintivo --//
 			calcola_I_asm_omp(deltax, input->np, n_coordinate_tot, deltaf, I);
+			//printf("post calcola I\n");
 			//stampa_coordinate(input, 1);
 			//printf("VETTORE I\n");
 			//stampa_matrice(input, I, 1, input->d, 1);
-			mov_istintivo(input, I);
+			mov_istintivo_asm_omp(input->x, input->np, n_coordinate_tot, I);
+			//printf("post mov ist\n");
 			//stampa_coordinate(input, 1);
 		}// else (mindeltaf >= 0) nessun pesce si è spostato durante il mov individuale
 		//-- calcola baricentro --//
@@ -470,25 +472,16 @@ void calcola_val_f(VECTOR f_cur, params* input){// conviene il suo utilizzo solo
   	}
 }//calcola_val_f
 
-void mov_istintivo(params* input, VECTOR I){
-	int n_coordinate_tot = input->d + input->padding_d;
-	// #pragma omp parallel for num_threads(MAX_NUM_THREADS)
-	for(int pesce = 0; pesce < input->np; pesce++){
-		// printf("pesce = %d\n", pesce);
-		mov_istintivo_asm_omp(&(input->x[pesce*n_coordinate_tot]), n_coordinate_tot, I);
-	}
-}
-
 // MOV VOLITIVO
 void mov_volitivo(params* input, VECTOR baricentro, type* peso_tot_old, type* peso_tot_cur, int* ind_r){
 	type direzione = 1;
 	if(*peso_tot_old < *peso_tot_cur)
 		 direzione = -1; 
-	int n_coordinate_tot = input->d + input->padding_d;
+
 	#pragma omp parallel for num_threads(MAX_NUM_THREADS)
 	for(int pesce = 0; pesce < input->np; pesce++){
 		mov_volitivo_asm_omp(
-			&(input->x[pesce*n_coordinate_tot]), 
+			&(input->x[pesce*(input->d+input->padding_d)]), 
 			input->d, input->stepvol, baricentro, 
 			direzione, &(input->r[*ind_r+pesce])
 		);

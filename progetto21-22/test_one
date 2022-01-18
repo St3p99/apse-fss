@@ -65,6 +65,8 @@ exec(){
 	x=$(printf "../../data/x%s_%s_%s.ds2" $arch $d $np);
 	xh=$(printf "xh%s_%s_%s_%s.ds2" $arch $d $np $it);
 
+	if [[ silent -eq 0 ]]; then printf "exec ./fss$kind np:$np d:$d it:$it\n"; fi;
+
 	found=0;
 	if [[ -f $r ]]; then
 		if [[ -f $c ]]; then
@@ -87,6 +89,7 @@ exec(){
 	if [[ $found -eq 0 ]]; then
 		exit;
 	fi;
+	
 		
 	START_TIME=$(date +%s%3N);
 	if [[ -f ./fss$kind ]]; then
