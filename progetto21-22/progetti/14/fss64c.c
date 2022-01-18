@@ -58,11 +58,6 @@ typedef struct {
 	VECTOR r; //numeri casuali
 	int np; //numero di pesci, quadrato del parametro np
 	int d; //numero di dimensioni del data set
-<<<<<<< HEAD
-=======
-	int padding_np; // numero di elementi di padding pesci
-	int padding_d;  // numero di elementi di padding coordinate
->>>>>>> e591968bec5d829f66cb7c9e2379fd7f3c04ac79
 	int iter; //numero di iterazioni
 	type stepind; //parametro stepind
 	type stepvol; //parametro stepvol
@@ -74,34 +69,19 @@ typedef struct {
 /*
 * 
 *	Le funzioni sono state scritte assumento che le matrici siano memorizzate 
-<<<<<<< HEAD
 * 	mediante un array (double*), in modo da occupare un unico blocco
 * 	di memoria, ma a scelta del candidato possono essere 
 * 	memorizzate mediante array di array (double**).
-* 
-* 	In entrambi i casi il candidato dovrà inoltre scegliere se memorizzare le
-* 	matrici per righe (row-major order) o per colonne (column major-order).
-*
-* 	L'assunzione corrente è che le matrici siano in row-major order.
-=======
-* 	mediante un array (float*), in modo da occupare un unico blocco
-* 	di memoria, ma a scelta del candidato possono essere 
-* 	memorizzate mediante array di array (float**).
 * 
 * 	In entrambi i casi il candidato dovrï¿½ inoltre scegliere se memorizzare le
 * 	matrici per righe (row-major order) o per colonne (column major-order).
 *
 * 	L'assunzione corrente ï¿½ che le matrici siano in row-major order.
->>>>>>> e591968bec5d829f66cb7c9e2379fd7f3c04ac79
 * 
 */
 
 void* get_block(int size, int elements) { 
-<<<<<<< HEAD
 	return _mm_malloc(elements*size,32); 
-=======
-	return _mm_malloc(elements*size, 32); 
->>>>>>> e591968bec5d829f66cb7c9e2379fd7f3c04ac79
 }
 
 void free_block(void* p) { 
@@ -127,17 +107,10 @@ void dealloc_matrix(MATRIX mat) {
 * 	Codifica del file:
 * 	primi 4 byte: numero di righe (N) --> numero intero
 * 	successivi 4 byte: numero di colonne (M) --> numero intero
-<<<<<<< HEAD
 * 	successivi N*M*4 byte: matrix data in row-major order --> numeri doubleing-point a precisione singola
 * 
 *****************************************************************************
-*	Se lo si ritiene opportuno, è possibile cambiare la codifica in memoria
-=======
-* 	successivi N*M*4 byte: matrix data in row-major order --> numeri floating-point a precisione singola
-* 
-*****************************************************************************
 *	Se lo si ritiene opportuno, ï¿½ possibile cambiare la codifica in memoria
->>>>>>> e591968bec5d829f66cb7c9e2379fd7f3c04ac79
 * 	della matrice. 
 *****************************************************************************
 * 
@@ -166,10 +139,6 @@ MATRIX load_data(char* filename, int *n, int *k) {
 	return data;
 }
 
-<<<<<<< HEAD
-=======
-
->>>>>>> e591968bec5d829f66cb7c9e2379fd7f3c04ac79
 /*
 * 	save_data
 * 	=========
@@ -178,15 +147,9 @@ MATRIX load_data(char* filename, int *n, int *k) {
 *	come matrice di N righe e M colonne
 * 
 * 	Codifica del file:
-<<<<<<< HEAD
 * 	primi 4 byte: numero di righe (N) --> numero intero a 64 bit
 * 	successivi 4 byte: numero di colonne (M) --> numero intero a 64 bit
 * 	successivi N*M*4 byte: matrix data in row-major order --> numeri interi o doubleing-point a precisione singola
-=======
-* 	primi 4 byte: numero di righe (N) --> numero intero a 32 bit
-* 	successivi 4 byte: numero di colonne (M) --> numero intero a 32 bit
-* 	successivi N*M*4 byte: matrix data in row-major order --> numeri interi o floating-point a precisione singola
->>>>>>> e591968bec5d829f66cb7c9e2379fd7f3c04ac79
 */
 void save_data(char* filename, void* X, int n, int k) {
 	FILE* fp;
@@ -211,10 +174,6 @@ void save_data(char* filename, void* X, int n, int k) {
 
 // PROCEDURE ASSEMBLY
 
-<<<<<<< HEAD
-extern void prova(params* input);
-
-=======
 // extern void prova(params* input);
 
 // METODI DI SUPPORTO
@@ -232,17 +191,10 @@ void stampa_coordinate(params* input){
 }
 
 // FSS
->>>>>>> e591968bec5d829f66cb7c9e2379fd7f3c04ac79
 void fss(params* input){
 	// -------------------------------------------------
 	// Codificare qui l'algoritmo Fish Search School
 	// -------------------------------------------------
-<<<<<<< HEAD
-}
-
-int main(int argc, char** argv) {
-
-=======
 	// NOTA: inizializzazione matrix x fatta nel main
 	// 		 leggendo posizioni da file x32_8_64.ds2
 	// -------------------------------------------------
@@ -517,20 +469,15 @@ void calcola_f_min(int n_pesci, VECTOR f_cur, type* f_min, int* ind_f_min){
 		}
 	}
 }
-
 int main(int argc, char** argv) {
->>>>>>> e591968bec5d829f66cb7c9e2379fd7f3c04ac79
+
 	char fname[256];
 	char* coefffilename = NULL;
 	char* randfilename = NULL;
 	char* xfilename = NULL;
 	int i, j, k;
 	clock_t t;
-<<<<<<< HEAD
-	double time;
-=======
 	float time;
->>>>>>> e591968bec5d829f66cb7c9e2379fd7f3c04ac79
 	
 	//
 	// Imposta i valori di default dei parametri
@@ -674,10 +621,6 @@ int main(int argc, char** argv) {
 		exit(1);
 	}
 
-<<<<<<< HEAD
-=======
-
->>>>>>> e591968bec5d829f66cb7c9e2379fd7f3c04ac79
 	int x,y;
 	input->c = load_data(coefffilename, &input->d, &y);
 	input->r = load_data(randfilename, &x, &y);
@@ -725,11 +668,7 @@ int main(int argc, char** argv) {
 	}
 
 	// COMMENTARE QUESTA RIGA!
-<<<<<<< HEAD
-	prova(input);
-=======
 	// prova(input);
->>>>>>> e591968bec5d829f66cb7c9e2379fd7f3c04ac79
 	//
 
 	//
@@ -739,11 +678,7 @@ int main(int argc, char** argv) {
 	t = clock();
 	fss(input);
 	t = clock() - t;
-<<<<<<< HEAD
-	time = ((double)t)/CLOCKS_PER_SEC;
-=======
 	time = ((float)t)/CLOCKS_PER_SEC;
->>>>>>> e591968bec5d829f66cb7c9e2379fd7f3c04ac79
 
 	if(!input->silent)
 		printf("FSS time = %.3f secs\n", time);
@@ -770,8 +705,4 @@ int main(int argc, char** argv) {
 		printf("\nDone.\n");
 
 	return 0;
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> e591968bec5d829f66cb7c9e2379fd7f3c04ac79
