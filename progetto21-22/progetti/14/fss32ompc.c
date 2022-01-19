@@ -367,44 +367,26 @@ void fss(params* input){
 	while (it < input->iter){
 		//-- calcolo nuove coordinate, deltaf, deltax, mindeltaf, --//
 		mov_individuali(input, deltaf, deltax, y, &mindeltaf, f_cur, f_y, &ind_r); // PRAMGA E ASM ALL'INTERNO 
-		//printf("post mov ind\n");
-		//stampa_coordinate(input, 1);
-		//printf("DELTA X\n");
-		//stampa_matrice(input, deltax, input->np, input->d, 1);
 		//-- aggiorna pesi dei pesci --//
 		if(mindeltaf < 0){ 
 			alimenta_asm_omp(n_pesci_tot, deltaf, pesi, mindeltaf);
-			//printf("post alimenta\n");
-			//stampa_coordinate(input, 1);
 			//-- esegui movimento istintivo --//
 			calcola_I_asm_omp(deltax, input->np, n_coordinate_tot, deltaf, I);
-			//printf("post calcola I\n");
-			//stampa_coordinate(input, 1);
-			//printf("VETTORE I\n");
-			//stampa_matrice(input, I, 1, input->d, 1);
 			mov_istintivo_asm_omp(input->x, input->np, n_coordinate_tot, I);
-			//printf("post mov ist\n");
-			//stampa_coordinate(input, 1);
 		}// else (mindeltaf >= 0) nessun pesce si è spostato durante il mov individuale
 		//-- calcola baricentro --//
 		baricentro_asm_omp(input->x, input->np, n_coordinate_tot, pesi, baricentro, &peso_tot_cur);
-		//printf("post baricentro\n");
-		//stampa_coordinate(input, 1);
 		//-- esegui movimento volitivo --/
 		mov_volitivo(input, baricentro, &peso_tot_old, &peso_tot_cur, &ind_r); // PRAGMA E ASM ALL'INTERNO		
-		//printf("post mov vol\n");
-		//stampa_coordinate(input, 1);
 		//-- aggiorna valori f_cur     --/
 		calcola_val_f(f_cur, input);  // PRAMGA E ASM ALL'INTERNO 
-		//printf("post calcola val f\n");
-		//stampa_coordinate(input, 1);
 		//-- aggiorna parametri --//
 		input->stepind = input->stepind - decadimento_ind;
 		input->stepvol = input->stepvol - decadimento_vol;
 		it++;
 	}
 	calcola_f_min(input->np, f_cur, &f_min, &ind_f_min);
-	printf("ind_f_min = %d\n", ind_f_min);
+	if(!input->silent) printf("ind_f_min = %d\n", ind_f_min);
 	//------- RETURN POS MIN ---------------
 	input->xh = alloc_matrix(1, input->d);
 	for(int j = 0; j < input->d; j++)
