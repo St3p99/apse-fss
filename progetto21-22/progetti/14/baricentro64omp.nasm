@@ -35,10 +35,6 @@ section .text
 baricentro_asm_omp: 
     start
 
-    ; mov eax, [ebp+input_x]	; indirizzo matrice x
-	; mov edx, [ebp+input_d] 
-    ; mov esi, [ebp+baricentro] ; esi <- indirizzo vettore baricentro
-
 ; azzera baricentro
     vxorpd ymm0, ymm0, ymm0
     mov rax, 0

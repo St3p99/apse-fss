@@ -6,14 +6,16 @@ section .data
     UNROLL_COORDINATE       equ     2
 
 section .bss
-    alignb 32
-    m resq p
+    ;DEBUG
+    ; alignb 32
+    ; m resq p
 
 section .text
     global calcola_val_f_asm_omp
 
-    msg	           db	    'ECCOCIIIII!!!!!!!!!',32,0
-    nl	           db	10,0
+    ;DEBUG
+    ; msg	           db	    'ECCOCIIIII!!!!!!!!!',32,0
+    ; nl	           db	10,0
     ; prints msg
 	; prints nl
     

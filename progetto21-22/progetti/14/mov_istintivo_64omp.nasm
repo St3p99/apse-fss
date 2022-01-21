@@ -18,8 +18,8 @@ section .text
     global mov_istintivo_asm_omp
 
     ; DEBUG
-    msg	db	'ECCOCIIIII!!!!!!!!!',32,0
-    nl	db	10,0
+    ; msg	db	'ECCOCIIIII!!!!!!!!!',32,0
+    ; nl	db	10,0
     ; prints msg
 	; prints nl
 
@@ -29,7 +29,6 @@ mov_istintivo_asm_omp:
     ; rdi -> x
     ; rsi -> d+padding
     ; rdx -> I
-
     
     imul    rsi,    dim                                    ; input_d*dim
     mov     r11,    p*dim*UNROLL_COORDINATE                ; coordinata

@@ -314,7 +314,6 @@ void fss(params* input){
 	// 		 leggendo posizioni da file x32_8_64.ds2
 	// -------------------------------------------------
 	//-- inizializza peso Wi per ogni pesce i --//
-	// stampa_coordinate(input);
 	VECTOR pesi = alloc_matrix(1, input->np+input->padding_np);
 	padding_vector(pesi, input->np, input->padding_np);
 	int i;

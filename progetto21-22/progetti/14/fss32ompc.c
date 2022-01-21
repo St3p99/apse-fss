@@ -53,7 +53,7 @@
 #define	VECTOR		type*
 
 
-#define MAX_NUM_THREADS 7
+#define MAX_NUM_THREADS 4
 
 typedef struct {
 	MATRIX x; //posizione dei pesci
@@ -249,10 +249,10 @@ void save_data(char* filename, void* X, int n, int k) {
 // PROCEDURE ASSEMBLY
 
 // extern void prova(params* input);
-extern void calcola_y_asm_omp(VECTOR x, VECTOR y, int d, type step_ind, VECTOR r); // singolo pesce PERNA
+extern void calcola_y_asm_omp(VECTOR x, VECTOR y, int d, type step_ind, VECTOR r); // singolo pesce
 
-extern void calcola_f_y_asm_omp(VECTOR x, VECTOR y, int d, VECTOR deltax, VECTOR c, type* y_2, type* c_y); // singolo pesce MORRONE 32 e omp ara diritta
-extern void calcola_val_f_asm_omp(VECTOR x, int d, VECTOR c, type* x_2, type* c_x); // singolo pesce MANGIONE
+extern void calcola_f_y_asm_omp(VECTOR x, VECTOR y, int d, VECTOR deltax, VECTOR c, type* y_2, type* c_y); // singolo pesce
+extern void calcola_val_f_asm_omp(VECTOR x, int d, VECTOR c, type* x_2, type* c_x); // singolo pesce 
 
 extern void alimenta_asm_omp(int np, VECTOR deltaf, VECTOR pesi, type mindeltaf); // tutti i pesci
 extern void calcola_I_asm_omp(VECTOR deltax, int np, int d, VECTOR deltaf, VECTOR I); // tutti i pesci
@@ -317,19 +317,14 @@ void fss(params* input){
 	// -------------------------------------------------
 	// Codificare qui l'algoritmo Fish Search School
 	// -------------------------------------------------
-	// NOTA: inizializzazione matrix x fatta nel main
-	// 		 leggendo posizioni da file x32_8_64.ds2
-	// -------------------------------------------------
-	//-- inizializza peso Wi per ogni pesce i --//
-	// stampa_coordinate(input);
 	VECTOR pesi = alloc_matrix(1, input->np+input->padding_np);
 	padding_vector(pesi, input->np, input->padding_np);
-
+	//-- inizializza peso Wi per ogni pesce i --//
 	#pragma omp parallel for num_threads(MAX_NUM_THREADS)
 	for(int i = 0; i < input->np; i++){
 		pesi[i] = input->wscale/2;
 	}
-	// -------------------------------------------------
+	
 	int it = 0;
 	type peso_tot_cur = (input -> wscale/2)*(input -> np);
 	type peso_tot_old = peso_tot_cur;
@@ -348,7 +343,6 @@ void fss(params* input){
 	padding_vector(deltaf, input->np, input->padding_np);
 	MATRIX deltax = alloc_matrix(input->np, input->d + input->padding_d);
 	padding_matrix(deltax, input->np, input->d, input->padding_d);
-	//-- allocazione matrix y per salvare le coordinate a seguito del mov. individuale --//
 	MATRIX y = alloc_matrix(input->np, input->d + input->padding_d);
 	padding_matrix(y, input->np, input->d, input->padding_d);
 
@@ -374,6 +368,7 @@ void fss(params* input){
 			calcola_I_asm_omp(deltax, input->np, n_coordinate_tot, deltaf, I);
 			mov_istintivo_asm_omp(input->x, input->np, n_coordinate_tot, I);
 		}// else (mindeltaf >= 0) nessun pesce si è spostato durante il mov individuale
+		
 		//-- calcola baricentro --//
 		baricentro_asm_omp(input->x, input->np, n_coordinate_tot, pesi, baricentro, &peso_tot_cur);
 		//-- esegui movimento volitivo --/

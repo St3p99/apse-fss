@@ -11,8 +11,9 @@ section .data
 section .bss
     alignb 16
 	np_meno_unroll resd 1
-	alignb 16
-	m resd p
+	;DEBUG
+	; alignb 16
+	; m resd p
 
 section .text
     global calcola_f_y_asm
@@ -25,8 +26,10 @@ section .text
     vector_c       equ     28 
     y_2            equ     32
     c_y            equ     36
-    msg	           db	    'ECCOCIIIII!!!!!!!!!',32,0
-    nl	           db	10,0
+    
+	;DEBUG
+	; msg	           db	    'ECCOCIIIII!!!!!!!!!',32,0
+    ; nl	           db	10,0
     ; prints msg
 	; prints nl
 

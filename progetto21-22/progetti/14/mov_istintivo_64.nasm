@@ -19,8 +19,8 @@ section .text
     global mov_istintivo_asm
 
     ; DEBUG
-    msg	db	'ECCOCIIIII!!!!!!!!!',32,0
-    nl	db	10,0
+    ; msg	db	'ECCOCIIIII!!!!!!!!!',32,0
+    ; nl	db	10,0
     ; prints msg
 	; prints nl
 
@@ -32,7 +32,6 @@ mov_istintivo_asm:
     ; rdx -> d+padding
     ; rcx -> I
 
-    
     imul    rdx,    dim        ; input_d*dim
     mov     r10,    UNROLL_PESCI          ; pesce i = 0
 for_pesci:

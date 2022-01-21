@@ -11,18 +11,18 @@ section .data
 
 section .bss
     ; DEBUG
-    alignb 32
-    m resq p
+    ; alignb 32
+    ; m resq p
 
 section .text
     global baricentro_asm
 
 	; baricentro_asm(
-	; 	input->x,  ; intero RDI (eax)
-	; 	input->np, ; intero RSI (edi)
-	; 	input->d+input->padding_d, ; intero RDX (edx)
-	; 	pesi, ; intero RCX (esi)
-	; 	baricentro, ; intero R8 (esi)
+	; 	input->x,  ; intero RDI 
+	; 	input->np, ; intero RSI 
+	; 	input->d+input->padding_d, ; intero RDX 
+	; 	pesi, ; intero RCX 
+	; 	baricentro, ; intero R8 
 	; 	&peso_tot_cur ;intero R9
 	; );
     
@@ -34,10 +34,6 @@ section .text
 
 baricentro_asm: 
     start
-
-    ; mov eax, [ebp+input_x]	; indirizzo matrice x
-	; mov edx, [ebp+input_d] 
-    ; mov esi, [ebp+baricentro] ; esi <- indirizzo vettore baricentro
 
 ; azzera baricentro
     vxorpd ymm0, ymm0, ymm0

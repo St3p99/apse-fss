@@ -9,14 +9,17 @@ section .data
 section .bss
     alignb 32
 	np_meno_unroll resd 1
-    alignb 32
-    m resq p
+    
+    ;DEBUG
+    ; alignb 32
+    ; m resq p
 
 section .text
     global calcola_val_f_asm
 
-    msg	           db	    'ECCOCIIIII!!!!!!!!!',32,0
-    nl	           db	10,0
+    ;DEBUG
+    ; msg	           db	    'ECCOCIIIII!!!!!!!!!',32,0
+    ; nl	           db	10,0
     ; prints msg
 	; prints nl
     

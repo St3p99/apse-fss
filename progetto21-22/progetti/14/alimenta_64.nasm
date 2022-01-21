@@ -12,12 +12,7 @@ section .bss
 
 section .text
     global alimenta_asm
-
-    ; input_np    equ     8
-    ; delta_f     equ     12
-    ; pr8        equ     16
-    ; min_delta_f equ     20
-    
+   
     ; DEBUG
     ; msg	db	'ECCOCIIIII!!!!!!!!!',32,0
     ; nl	db	10,0
@@ -26,18 +21,11 @@ section .text
 
 alimenta_asm:
     start
-    ; rdx: indirizzo pr8
+    ; rdx: indirizzo pesi
     ; rsi: indirizzo deltaf
     ; rdi: np*dim
     ; ymm0: min_delta_f replicato
-    ; r8: pesce i-r8mo
-
-    ; alimenta_asm(
-    ;     input->np+input->padding_np,      //RDI
-    ;     deltaf,                           //RSI
-    ;     pr8,                             //RDX
-    ;     mindeltaf                         // ymm0
-    ; )
+    ; r8: pesce i-esimo
 
     imul    rdi,     dim
 

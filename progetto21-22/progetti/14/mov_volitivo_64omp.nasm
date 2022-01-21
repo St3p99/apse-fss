@@ -11,15 +11,18 @@ section .data
     v_meno_uno dq -1.0, -1.0, -1.0, -1.0
 
 section .bss
-    alignb 32
-    m resq p
+    ;DEBUG
+    ; alignb 32
+    ; m resq p
 
 section .text
     global mov_volitivo_asm_omp
     
     vector_r    equ     16
-    msg	db	'ECCOCIIIII!!!!!!!!!',32,0
-    nl	db	10,0
+    
+    ;DEBUG
+    ; msg	db	'ECCOCIIIII!!!!!!!!!',32,0
+    ; nl	db	10,0
     ; prints msg
 	; prints nl
 
@@ -33,17 +36,6 @@ mov_volitivo_asm_omp:
     ;     input->r,             RCX
 	; 	  stepvol   ,           xmm0
     ;     direzione,            xmm1
-    ; );
-
-    ; mov_volitivo_asm(
-    ;     input->x,             RDI
-    ;     input->np,            RSI -- eliminato
-    ;     input->d,             RDX -> RSI
-    ;     input->padding_d,     RCX -- eliminato
-    ;     input->stepvol,       xmm0 
-	; 	  baricentro,           R8 -> RDX
-    ;     direzione,            xmm1 
-    ;     &(input->r[ind_r])    R9 -> RCX
     ; );
 
     imul RSI, dim ; d*dim
@@ -74,7 +66,6 @@ for_distanza:
         vmulpd  ymm1, ymm1
 
         vaddpd  ymm2, ymm7
-        vmovapd [m], ymm2
 
         vaddpd  ymm3, ymm1
 

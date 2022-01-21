@@ -24,8 +24,8 @@ section .text
     vector_i  equ     24
     
     ; DEBUG
-    msg	db	'ECCOCIIIII!!!!!!!!!',32,0
-    nl	db	10,0
+    ; msg	db	'ECCOCIIIII!!!!!!!!!',32,0
+    ; nl	db	10,0
     ; prints msg
 	; prints nl
 
@@ -278,13 +278,9 @@ next_div:
     haddps  xmm6, xmm6
     haddps  xmm6, xmm6 ; xmm6 -> deltafsum
 
-    ; DELTAFSUM != 0 IMPOSSIBILE
+    ; NOTA
+    ; DELTAFSUM == 0 IMPOSSIBILE
     ; POICHÈ CONTROLLATO MINDELTAF < 0 PRECEDENEMENTE SU C
-    ; xorps xmm0, xmm0
-    ; cmpneqps xmm0, xmm6
-    ; pmovmskb eax, xmm0
-    ; cmp eax, zero
-    ; je return
 
 for_div_8: 
     cmp edx, p*dim*UNROLL_COORDINATE

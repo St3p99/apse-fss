@@ -12,11 +12,6 @@ section .bss
 
 section .text
     global alimenta_asm_omp
-
-    ; input_np    equ     8
-    ; delta_f     equ     12
-    ; pr8        equ     16
-    ; min_delta_f equ     20
     
     ; DEBUG
     ; msg	db	'ECCOCIIIII!!!!!!!!!',32,0
@@ -26,13 +21,6 @@ section .text
 
 alimenta_asm_omp:
     start
-
-    ; alimenta_asm(
-    ;     input->np+input->padding_np,      //RDI
-    ;     deltaf,                           //RSI
-    ;     pesi,                             //RDX
-    ;     mindeltaf                         // ymm0
-    ; )
 
     imul    rdi,     dim
 

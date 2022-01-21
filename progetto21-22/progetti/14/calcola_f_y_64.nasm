@@ -12,8 +12,9 @@ section .bss
     alignb 32
 	np_meno_unroll resd 1
 	
-	alignb 32
-	m resq p
+	;DEBUG
+	; alignb 32
+	; m resq p
 
 section .text
     global calcola_f_y_asm
@@ -21,19 +22,14 @@ section .text
     y_2            equ     16
     c_y            equ     24
     
-	msg	           db	    'ECCOCIIIII!!!!!!!!!',32,0
-    nl	           db	10,0
+	;DEBUG
+	; msg	           db	    'ECCOCIIIII!!!!!!!!!',32,0
+    ; nl	           db	10,0
     ; prints msg
 	; prints nl
 
 calcola_f_y_asm: 
     start
-
-; mov rdi, [ebp+input_x]; mi serve indirizzo ultima coordinata ultimo pesce +4
-; mov rsi, [ebp+matrix_y]; mi serve ultima coordinata ultimo pesce
-; mov ecx, [ebp+d_piu_padding] ; d+padding
-; mov r8, [ebp+deltax]; stesso ragionamento di x e y (anche y_2 e c_y)
-; mov esi, [ebp+vector_c]; prendi ultimo elemento di c
 
 ; calcola_f_y_asm(
 ; 	input->x, 					RDI

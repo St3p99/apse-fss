@@ -1,2 +1,2 @@
 #!/bin/bash
-./test_one 14 100 | grep 'f_min\|FSS time\|seg\|exec\|ERR'
+./my_test_one 14 100 | grep 'f_min\|FSS time\|seg\|exec\|ERR'

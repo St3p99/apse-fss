@@ -19,8 +19,10 @@ section .text
     vector_c    equ     20
     ret_x_2     equ     24
     ret_c_x     equ     28
-    msg	           db	    'ECCOCIIIII!!!!!!!!!',32,0
-    nl	           db	10,0
+    
+    ;DEBUG
+    ; msg	           db	    'ECCOCIIIII!!!!!!!!!',32,0
+    ; nl	           db	10,0
     ; prints msg
 	; prints nl
 

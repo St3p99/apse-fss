@@ -12,15 +12,18 @@ section .data
     v_meno_uno dq -1.0, -1.0, -1.0, -1.0
 
 section .bss
-    alignb 32
-    m resq p
+    ;DEBUG
+    ; alignb 32
+    ; m resq p
 
 section .text
     global mov_volitivo_asm
     
     vector_r    equ     16
-    msg	db	'ECCOCIIIII!!!!!!!!!',32,0
-    nl	db	10,0
+    
+    ;DEBUG
+    ; msg	db	'ECCOCIIIII!!!!!!!!!',32,0
+    ; nl	db	10,0
     ; prints msg
 	; prints nl
 
@@ -71,7 +74,6 @@ for_distanza:
         vmulpd  ymm1, ymm1
 
         vaddpd  ymm2, ymm7
-        vmovapd [m], ymm2
 
         vaddpd  ymm3, ymm1
 

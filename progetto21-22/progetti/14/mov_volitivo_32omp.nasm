@@ -13,8 +13,8 @@ section .data
 
 section .bss
     ; DEBUG
-    alignb 16
-    m resd p
+    ; alignb 16
+    ; m resd p
 
 section .text
     global mov_volitivo_asm_omp
@@ -27,8 +27,8 @@ section .text
     vector_r    equ     28
     
     ; DEBUG
-    msg	db	'ECCOCIIIII!!!!!!!!!',32,0
-    nl	db	10,0
+    ; msg	db	'ECCOCIIIII!!!!!!!!!',32,0
+    ; nl	db	10,0
     ; prints msg
 	; prints nl
 

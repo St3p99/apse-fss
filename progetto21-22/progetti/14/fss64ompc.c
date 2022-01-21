@@ -53,7 +53,7 @@
 #define	VECTOR		type*
 
 
-#define MAX_NUM_THREADS 7
+#define MAX_NUM_THREADS 4
 
 typedef struct {
 	MATRIX x; //posizione dei pesci
@@ -187,15 +187,12 @@ MATRIX load_x_padding(char* filename, int *n, int *k, int* padding_d) {
 	if( resto_col != 0 ){ // num_colonne non multiplo di mul (4)
 		*padding_d = (cols - resto_col + mul) - cols; // numero di zeri da aggiungere ad ogni riga
 		data = alloc_matrix(rows,cols + *padding_d);
-		// int ptr = (int) data;		
 		int n_cols_w_padding = cols + *padding_d; // numero di colonne considerando il padding
 		for(int i = 0; i < rows; i++){
 			// load riga
 			status = fread( &data[i*(n_cols_w_padding)], sizeof(type), cols, fp);			
 			// padding con *padding_d zeri alla fine della riga
 			padding_vector(&data[i*(n_cols_w_padding)], cols, *padding_d);
-			// ptr punterà all'inizio della prossima riga
-			// ptr += (n_cols_w_padding)*sizeof(type);
 		}
 	}
 	else{
