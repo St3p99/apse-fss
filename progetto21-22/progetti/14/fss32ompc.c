@@ -320,7 +320,7 @@ void fss(params* input){
 	VECTOR pesi = alloc_matrix(1, input->np+input->padding_np);
 	padding_vector(pesi, input->np, input->padding_np);
 	//-- inizializza peso Wi per ogni pesce i --//
-	#pragma omp parallel for num_threads(MAX_NUM_THREADS)
+	#pragma omp parallel for //num_threads(MAX_NUM_THREADS)
 	for(int i = 0; i < input->np; i++){
 		pesi[i] = input->wscale/2;
 	}
@@ -397,7 +397,7 @@ void mov_individuali(params* input, VECTOR deltaf, MATRIX deltax, MATRIX y, type
 	*mindeltaf = 1; // inizializzazione fittizia
 	int n_coordinate_tot = n_coordinate+padding_d;
 	
-	#pragma omp parallel for num_threads(MAX_NUM_THREADS)
+	#pragma omp parallel for //num_threads(MAX_NUM_THREADS)
 	for(int pesce = 0; pesce < n_pesci; pesce++){ // numero pesci	
 			// mov_individuale_pesce(input, deltax, y, pesce, *ind_r+pesce*n_coordinate, &(f_y[pesce]));
 			type y_2;
@@ -417,7 +417,7 @@ void mov_individuali(params* input, VECTOR deltaf, MATRIX deltax, MATRIX y, type
 	}
 	*ind_r = *ind_r + n_pesci*n_coordinate;
 	
-	#pragma omp parallel for num_threads(MAX_NUM_THREADS)
+	#pragma omp parallel for //num_threads(MAX_NUM_THREADS)
 	for(int pesce = 0; pesce < n_pesci; pesce++){ // aggiorna input->x e deltaf
 		if(f_y[pesce] >= f_cur[pesce]){ // la posizione non è migliore
 			deltaf[pesce] = 0.0; 
@@ -440,10 +440,10 @@ void mov_individuali(params* input, VECTOR deltaf, MATRIX deltax, MATRIX y, type
 void calcola_val_f(VECTOR f_cur, params* input){// conviene il suo utilizzo solo nell'inizializzazione
 	int n_coordinate_tot = input->d + input->padding_d;
 
-	type x_2;
-  	type c_x;
-	#pragma omp parallel for num_threads(MAX_NUM_THREADS) private(x_2, c_x)
+	#pragma omp parallel for //num_threads(MAX_NUM_THREADS)
 	for(int pesce = 0; pesce < input->np; pesce++){
+		type x_2;
+  		type c_x;
 		calcola_val_f_asm_omp(&(input->x[pesce*n_coordinate_tot]), n_coordinate_tot, input->c, &x_2, &c_x);
 		f_cur[pesce] = exp(x_2) + x_2 - c_x;
   	}
@@ -455,7 +455,7 @@ void mov_volitivo(params* input, VECTOR baricentro, type* peso_tot_old, type* pe
 	if(*peso_tot_old < *peso_tot_cur)
 		 direzione = -1; 
 
-	#pragma omp parallel for num_threads(MAX_NUM_THREADS)
+	#pragma omp parallel for //num_threads(MAX_NUM_THREADS)
 	for(int pesce = 0; pesce < input->np; pesce++){
 		mov_volitivo_asm_omp(
 			&(input->x[pesce*(input->d+input->padding_d)]), 
