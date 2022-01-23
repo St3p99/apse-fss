@@ -118,7 +118,7 @@ fine_coordinate:
 	vhaddpd ymm0, ymm15, ymm0
 	vhaddpd ymm0, ymm0, ymm0
 
-	vmovsd [r9], xmm0 ; rivedere solo qui indicizzazione
+	vmovsd [r9], xmm0 
 	
 	VPERM2F128 ymm15, ymm1, ymm1, 00000001b
 	vhaddpd ymm1, ymm15, ymm1

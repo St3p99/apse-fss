@@ -125,7 +125,7 @@ fine_coordinate:
 	vhaddpd ymm0, ymm0, ymm0
 
 	mov r11, [rbp+y_2]
-	vmovsd [r11+rax*dim], xmm0 ; rivedere solo qui indicizzazione
+	vmovsd [r11+rax*dim], xmm0 
 	
 	VPERM2F128 ymm15, ymm1, ymm1, 00000001b
 	vhaddpd ymm1, ymm15, ymm1
@@ -210,7 +210,7 @@ fine_coordinate_2:
 	vhaddpd ymm0, ymm0, ymm0
 
 	mov r11, [rbp+y_2]
-	vmovsd [r11+rax*dim], xmm0 ; rivedere solo qui indicizzazione
+	vmovsd [r11+rax*dim], xmm0 
 	
 	VPERM2F128 ymm15, ymm1, ymm1, 00000001b
 	vhaddpd ymm1, ymm15, ymm1
@@ -295,7 +295,7 @@ fine_coordinate_3:
 	vhaddpd ymm0, ymm0, ymm0
 
 	mov r11, [rbp+y_2]
-	vmovsd [r11+rax*dim], xmm0 ; rivedere solo qui indicizzazione
+	vmovsd [r11+rax*dim], xmm0 
 	
 	VPERM2F128 ymm15, ymm1, ymm1, 00000001b
 	vhaddpd ymm1, ymm15, ymm1
@@ -380,7 +380,7 @@ fine_coordinate_4:
 	vhaddpd ymm0, ymm0, ymm0
 
 	mov r11, [rbp+y_2]
-	vmovsd [r11+rax*dim], xmm0 ; rivedere solo qui indicizzazione
+	vmovsd [r11+rax*dim], xmm0 
 	
 	VPERM2F128 ymm15, ymm1, ymm1, 00000001b
 	vhaddpd ymm1, ymm15, ymm1
@@ -474,7 +474,7 @@ fine_coordinate_extra:
 	vhaddpd ymm0, ymm0, ymm0
 
 	mov r11, [rbp+y_2]
-	vmovsd [r11+rax*dim], xmm0 ; rivedere solo qui indicizzazione
+	vmovsd [r11+rax*dim], xmm0 
 	
 	VPERM2F128 ymm15, ymm1, ymm1, 00000001b
 	vhaddpd ymm1, ymm15, ymm1

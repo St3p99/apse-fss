@@ -36,11 +36,11 @@ section .text
 calcola_f_y_asm: 
     start
 
-mov eax, [ebp+input_x]; mi serve indirizzo ultima coordinata ultimo pesce +4
-mov ebx, [ebp+matrix_y]; mi serve ultima coordinata ultimo pesce
-mov ecx, [ebp+d_piu_padding] ; d+padding
-mov edi, [ebp+deltax]; stesso ragionamento di x e y (anche y_2 e c_y)
-mov esi, [ebp+vector_c]; prendi ultimo elemento di c
+mov eax, [ebp+input_x]
+mov ebx, [ebp+matrix_y]
+mov ecx, [ebp+d_piu_padding]
+mov edi, [ebp+deltax]
+mov esi, [ebp+vector_c]
 
 mov edx, [ebp+np]
 sub edx, UNROLL_PESCI
@@ -128,7 +128,7 @@ fine_coordinate:
 	; sub ecx, edx
 
 	mov esi, [ebp+y_2]
-	movss [esi+edx*dim], xmm0 ; rivedere solo qui indicizzazione
+	movss [esi+edx*dim], xmm0 
 	
 	haddps xmm1,xmm1
 	haddps xmm1,xmm1
@@ -217,7 +217,7 @@ fine_coordinate_2:
 	; sub ecx, edx
 
 	mov esi,[ebp+y_2]
-	movss [esi+edx*dim], xmm0 ; rivedere solo qui indicizzazione
+	movss [esi+edx*dim], xmm0 
 	
 	haddps xmm1,xmm1
 	haddps xmm1,xmm1
@@ -305,7 +305,7 @@ fine_coordinate_3:
 	; sub ecx, edx
 
 	mov esi,[ebp+y_2]
-	movss [esi+edx*dim], xmm0 ; rivedere solo qui indicizzazione
+	movss [esi+edx*dim], xmm0 
 	
 	haddps xmm1,xmm1
 	haddps xmm1,xmm1
@@ -393,7 +393,7 @@ fine_coordinate_4:
 	; sub ecx, edx
 
 	mov esi,[ebp+y_2]
-	movss [esi+edx*dim], xmm0 ; rivedere solo qui indicizzazione
+	movss [esi+edx*dim], xmm0 
 	
 	haddps xmm1,xmm1
 	haddps xmm1,xmm1
@@ -487,7 +487,7 @@ fine_coordinate_end:
 	; sub ecx, edx
 
 	mov esi,[ebp+y_2]
-	movss [esi+edx*dim], xmm0 ; rivedere solo qui indicizzazione
+	movss [esi+edx*dim], xmm0 
 	
 	haddps xmm1,xmm1
 	haddps xmm1,xmm1

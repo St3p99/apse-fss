@@ -225,7 +225,7 @@ fine_for_pesci:
     vaddpd   ymm6,   ymm5  
 
 for_pesce:
-    vmovsd  xmm2,   [rcx+rax*dim]        ; [wi, wi+1, wi+2, wi+3]
+    vmovsd  xmm2,   [rcx+rax*dim]        
     vpermilps   ymm2, ymm2, 01000100b
     vperm2f128  ymm2, ymm2, ymm2, 00000000b
 
