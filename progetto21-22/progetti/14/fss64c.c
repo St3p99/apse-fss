@@ -189,7 +189,6 @@ MATRIX load_x_padding(char* filename, int *n, int *k, int* padding_d) {
 			status = fread(&data[i*(n_cols_w_padding)], sizeof(type), cols, fp);			
 			// padding con *padding_d zeri alla fine della riga
 			padding_vector(&data[i*(n_cols_w_padding)], cols, *padding_d);
-			// ptr punterà all'inizio della prossima riga
 		}
 	}
 	else{
