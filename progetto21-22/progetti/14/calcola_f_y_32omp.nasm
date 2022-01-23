@@ -33,11 +33,11 @@ section .text
 calcola_f_y_asm_omp: 
     start
 
-mov eax, [ebp+input_x]; mi serve indirizzo ultima coordinata ultimo pesce +4
-mov ebx, [ebp+matrix_y]; mi serve ultima coordinata ultimo pesce
-mov ecx, [ebp+d_piu_padding] ; d+padding
-mov edi, [ebp+deltax]; stesso ragionamento di x e y (anche y_2 e c_y)
-mov esi, [ebp+vector_c]; prendi ultimo elemento di c
+mov eax, [ebp+input_x]
+mov ebx, [ebp+matrix_y]
+mov ecx, [ebp+d_piu_padding] 
+mov edi, [ebp+deltax]
+mov esi, [ebp+vector_c]
 
 	xorps xmm0, xmm0 ; azzerando xmm3 per mantenere la somma parziale di x2
 	xorps xmm1, xmm1 ; azzerando xmm3 per mantenere la somma parziale di c_per_x
@@ -107,7 +107,7 @@ fine_coordinate:
 	haddps xmm0, xmm0 ; y^2 tot
 
 	mov esi, [ebp+y_2]
-	movss [esi], xmm0 ; rivedere solo qui indicizzazione
+	movss [esi], xmm0 
 	
 	haddps xmm1,xmm1
 	haddps xmm1,xmm1

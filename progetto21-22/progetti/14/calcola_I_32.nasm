@@ -228,7 +228,7 @@ fine_for_pesci:
     je  next_div
     
     mov     esi,    [ebp+delta_f]       ; esi <- indirizzo vettore delta_f    
-    movaps   xmm5,   [esi+ebx*dim]        ; [wi, wi+1, wi+2, wi+3]
+    movaps   xmm5,   [esi+ebx*dim]        
     addps   xmm6,   xmm5             ; somma parziale delta_f
     mov     esi,    [ebp+vector_i] ; esi <- indirizzo vettore vector_i
 for_pesce:
