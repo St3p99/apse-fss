@@ -4,7 +4,7 @@
 * Corso di Architetture e Programmazione dei Sistemi di Elaborazione - a.a. 2020/21
 * 
 * Progetto dell'algoritmo Fish School Search 221 231 a
-* in linguaggio assembly x86-64 + SSE
+* in linguaggio assembly x86-32 + SSE
 * 
 * Fabrizio Angiulli, aprile 2019
 * 
@@ -26,16 +26,16 @@
 * 
 * potrebbe essere necessario installare le seguenti librerie:
 * 
-*    sudo apt-get install lib64gcc-4.8-dev (o altra versione)
+*    sudo apt-get install lib32gcc-4.8-dev (o altra versione)
 *    sudo apt-get install libc6-dev-i386
 * 
 * Per generare il file eseguibile:
 * 
-* nasm -f elf64 fss64.nasm && gcc -m64 -msse -O0 -no-pie sseutils64.o fss64.o fss64c.c -o fss64c -lm && ./fss64c $pars
+* nasm -f elf32 fss32.nasm && gcc -m32 -msse -O0 -no-pie sseutils32.o fss32.o fss32c.c -o fss32c -lm && ./fss32c $pars
 * 
 * oppure
 * 
-* ./runfss64
+* ./runfss32
 * 
 */
 
@@ -46,10 +46,14 @@
 #include <time.h>
 #include <libgen.h>
 #include <xmmintrin.h>
+#include <omp.h>
 
-#define	type		double
+#define	type		float
 #define	MATRIX		type*
 #define	VECTOR		type*
+
+
+#define MAX_NUM_THREADS 4
 
 typedef struct {
 	MATRIX x; //posizione dei pesci
@@ -58,6 +62,8 @@ typedef struct {
 	VECTOR r; //numeri casuali
 	int np; //numero di pesci, quadrato del parametro np
 	int d; //numero di dimensioni del data set
+	int padding_np; // numero di elementi di padding pesci
+	int padding_d;  // numero di elementi di padding coordinate
 	int iter; //numero di iterazioni
 	type stepind; //parametro stepind
 	type stepvol; //parametro stepvol
@@ -69,9 +75,9 @@ typedef struct {
 /*
 * 
 *	Le funzioni sono state scritte assumento che le matrici siano memorizzate 
-* 	mediante un array (double*), in modo da occupare un unico blocco
+* 	mediante un array (float*), in modo da occupare un unico blocco
 * 	di memoria, ma a scelta del candidato possono essere 
-* 	memorizzate mediante array di array (double**).
+* 	memorizzate mediante array di array (float**).
 * 
 * 	In entrambi i casi il candidato dovr� inoltre scegliere se memorizzare le
 * 	matrici per righe (row-major order) o per colonne (column major-order).
@@ -81,7 +87,7 @@ typedef struct {
 */
 
 void* get_block(int size, int elements) { 
-	return _mm_malloc(elements*size,32); 
+	return _mm_malloc(elements*size,16); 
 }
 
 void free_block(void* p) { 
@@ -107,7 +113,7 @@ void dealloc_matrix(MATRIX mat) {
 * 	Codifica del file:
 * 	primi 4 byte: numero di righe (N) --> numero intero
 * 	successivi 4 byte: numero di colonne (M) --> numero intero
-* 	successivi N*M*4 byte: matrix data in row-major order --> numeri doubleing-point a precisione singola
+* 	successivi N*M*4 byte: matrix data in row-major order --> numeri floating-point a precisione singola
 * 
 *****************************************************************************
 *	Se lo si ritiene opportuno, � possibile cambiare la codifica in memoria
@@ -139,8 +145,6 @@ MATRIX load_data(char* filename, int *n, int *k) {
 	return data;
 }
 
-<<<<<<< HEAD:progetto21-22/progetti/14/c_code/fss64c.c
-=======
 MATRIX load_coeff_padding(char* filename, int padding) {
 	FILE* fp;
 	int rows, cols, status, i;
@@ -181,8 +185,8 @@ MATRIX load_x_padding(char* filename, int *n, int *k, int* padding_d) {
 	int mul = 4;
 	int resto_col = cols % mul;
 	if( resto_col != 0 ){ // num_colonne non multiplo di mul (4)
-		*padding_d = (cols - resto_col + mul) - cols; // numero di zeri da aggiungere ad ogni riga`
-		data = alloc_matrix(rows,cols + *padding_d);
+		*padding_d = (cols - resto_col + mul) - cols; // numero di zeri da aggiungere ad ogni riga
+		data = alloc_matrix(rows,cols + *padding_d);	
 		int n_cols_w_padding = cols + *padding_d; // numero di colonne considerando il padding
 		for(int i = 0; i < rows; i++){
 			// load riga
@@ -206,8 +210,6 @@ MATRIX load_x_padding(char* filename, int *n, int *k, int* padding_d) {
 }
 
 
-
->>>>>>> develop:progetto21-22/progetti/14/fss64c.c
 /*
 * 	save_data
 * 	=========
@@ -216,9 +218,9 @@ MATRIX load_x_padding(char* filename, int *n, int *k, int* padding_d) {
 *	come matrice di N righe e M colonne
 * 
 * 	Codifica del file:
-* 	primi 4 byte: numero di righe (N) --> numero intero a 64 bit
-* 	successivi 4 byte: numero di colonne (M) --> numero intero a 64 bit
-* 	successivi N*M*4 byte: matrix data in row-major order --> numeri interi o doubleing-point a precisione singola
+* 	primi 4 byte: numero di righe (N) --> numero intero a 32 bit
+* 	successivi 4 byte: numero di colonne (M) --> numero intero a 32 bit
+* 	successivi N*M*4 byte: matrix data in row-major order --> numeri interi o floating-point a precisione singola
 */
 void save_data(char* filename, void* X, int n, int k) {
 	FILE* fp;
@@ -229,7 +231,7 @@ void save_data(char* filename, void* X, int n, int k) {
 		fwrite(&n, 4, 1, fp);
 		for (i = 0; i < n; i++) {
 			fwrite(X, sizeof(type), k, fp);
-			// printf("%i %i\n", ((int*)X)[0], ((int*)X)[1]);
+			//printf("%i %i\n", ((int*)X)[0], ((int*)X)[1]);
 			X += sizeof(type)*k;
 		}
 	}
@@ -244,14 +246,17 @@ void save_data(char* filename, void* X, int n, int k) {
 // PROCEDURE ASSEMBLY
 
 // extern void prova(params* input);
-extern void calcola_y_asm(MATRIX x, MATRIX y, int np, int d, int padding_d, type step_ind, VECTOR r);
-extern void calcola_f_y_asm(MATRIX x, MATRIX y, int np, int d, VECTOR deltax, VECTOR c, VECTOR y_quadro, VECTOR c_per_y);
-extern void calcola_val_f_asm(MATRIX x, int np, int d, VECTOR c, VECTOR x_quadro, VECTOR c_per_x);
-extern void alimenta_asm(int np, VECTOR deltaf, VECTOR pesi, type mindeltaf);
-extern void calcola_I_asm(VECTOR deltax, int np, int d, VECTOR deltaf, VECTOR I);
-extern void mov_istintivo_asm(MATRIX x, int np, int d, VECTOR I);
-extern void baricentro_asm(MATRIX x, int np, int d, VECTOR pesi, VECTOR baricentro, type* peso_tot_cur);
-extern void mov_volitivo_asm(MATRIX x, int np, int d, int padding_d, type stepvol, VECTOR baricentro, type direzione, VECTOR r);
+extern void calcola_y_asm_omp(VECTOR x, VECTOR y, int d, type step_ind, VECTOR r); // singolo pesce
+
+extern void calcola_f_y_asm_omp(VECTOR x, VECTOR y, int d, VECTOR deltax, VECTOR c, type* y_2, type* c_y); // singolo pesce
+extern void calcola_val_f_asm_omp(VECTOR x, int d, VECTOR c, type* x_2, type* c_x); // singolo pesce 
+
+extern void alimenta_asm_omp(int np, VECTOR deltaf, VECTOR pesi, type mindeltaf); // tutti i pesci
+extern void calcola_I_asm_omp(VECTOR deltax, int np, int d, VECTOR deltaf, VECTOR I); // tutti i pesci
+extern void mov_istintivo_asm_omp(MATRIX x, int np, int d, VECTOR I); // tutti i pesci
+extern void baricentro_asm_omp(MATRIX x, int np, int d, VECTOR pesi, VECTOR baricentro, type* peso_tot_cur); // tutti i pesci
+
+extern void mov_volitivo_asm_omp(VECTOR x, int d, type stepvol, VECTOR baricentro, type direzione, VECTOR r); // singolo pesce
 
 
 // METODI DI SUPPORTO
@@ -266,10 +271,10 @@ void stampa_coordinate(params* input, int bool_print_padding){
 		printf("x[%d] = [", pesce);	  
 		for(int coordinata = 0; coordinata < n_coordinate - 1; coordinata++){ // coordinate pesce
       		type val_coordinata = input->x[n_coordinate_tot*(pesce)+coordinata];
-			printf(" %lf, ", val_coordinata);	  
+			printf(" %f, ", val_coordinata);	  
 		}
 		type val_last_coordinata = input->x[n_coordinate_tot*(pesce)+n_coordinate - 1];
-		printf(" %lf]\n", val_last_coordinata);	  
+		printf(" %f]\n", val_last_coordinata);	  
 	}
 }
 
@@ -284,10 +289,10 @@ void stampa_matrice(params* input, MATRIX m, int r, int c, int bool_print_paddin
 		printf("m[%d] = [", i);	  
 		for(int coordinata = 0; coordinata < n_coordinate - 1; coordinata++){ // coordinate pesce
       		type val_coordinata = m[(n_coordinate_tot)*(i)+coordinata];
-			printf(" %lf, ", val_coordinata);	  
+			printf(" %f, ", val_coordinata);	  
 		}
 		type val_last_coordinata = m[n_coordinate_tot*(i)+n_coordinate-1];
-		printf(" %lf]\n", val_last_coordinata);	  
+		printf(" %f]\n", val_last_coordinata);	  
 	}
 }
 
@@ -311,10 +316,12 @@ void fss(params* input){
 	// -------------------------------------------------
 	VECTOR pesi = alloc_matrix(1, input->np+input->padding_np);
 	padding_vector(pesi, input->np, input->padding_np);
-	int i;
-	for(i = 0; i < input->np; i++){
+	//-- inizializza peso Wi per ogni pesce i --//
+	#pragma omp parallel for //num_threads(MAX_NUM_THREADS)
+	for(int i = 0; i < input->np; i++){
 		pesi[i] = input->wscale/2;
 	}
+	
 	int it = 0;
 	type peso_tot_cur = (input -> wscale/2)*(input -> np);
 	type peso_tot_old = peso_tot_cur;
@@ -335,36 +342,36 @@ void fss(params* input){
 	padding_matrix(deltax, input->np, input->d, input->padding_d);
 	MATRIX y = alloc_matrix(input->np, input->d + input->padding_d);
 	padding_matrix(y, input->np, input->d, input->padding_d);
-	
-	VECTOR x_quadro= alloc_matrix(1, input->np);
-	VECTOR c_per_x = alloc_matrix(1, input->np);
 
 	type mindeltaf;
 	type deltafsum;
 	type f_min;
 	int ind_f_min;
 	int ind_r = 0;
-	calcola_val_f(f_cur, input, x_quadro, c_per_x);
+	int n_pesci_tot      = input->np+input->padding_np;
+	int n_coordinate_tot = input->d+input->padding_d;
+
+	//-- calcola val_f su coordinate iniziali x e inizializza f_min e ind_f_min
+	calcola_val_f(f_cur, input);  // PRAMGA E ASM ALL'INTERNO 
 	calcola_f_min(input->np, f_cur, &f_min, &ind_f_min);
-	if(!input->silent) printf("f min iniziale = %lf\n", f_min);
+	if(!input->silent) printf("f min iniziale = %f\n", f_min);
 	while (it < input->iter){
-		//-- calcolo nuove coordinate, deltaf, deltax, mindeltaf, --//		
-		mov_individuali(input, deltaf, deltax, y, &mindeltaf, f_cur, f_y, &ind_r, x_quadro, c_per_x);
-		if(mindeltaf < 0){
-			//-- aggiorna pesi dei pesci --//
-			alimenta_asm(input->np+input->padding_np, deltaf, pesi, mindeltaf);
+		//-- calcolo nuove coordinate, deltaf, deltax, mindeltaf, --//
+		mov_individuali(input, deltaf, deltax, y, &mindeltaf, f_cur, f_y, &ind_r); // PRAMGA E ASM ALL'INTERNO 
+		//-- aggiorna pesi dei pesci --//
+		if(mindeltaf < 0){ 
+			alimenta_asm_omp(n_pesci_tot, deltaf, pesi, mindeltaf);
 			//-- esegui movimento istintivo --//
-			calcola_I_asm(deltax, input->np, input->d + input->padding_d, deltaf, I);
-			mov_istintivo_asm(input->x, input->np, input->d + input->padding_d, I);
-		}
+			calcola_I_asm_omp(deltax, input->np, n_coordinate_tot, deltaf, I);
+			mov_istintivo_asm_omp(input->x, input->np, n_coordinate_tot, I);
+		}// else (mindeltaf >= 0) nessun pesce si è spostato durante il mov individuale
+		
 		//-- calcola baricentro --//
-		baricentro_asm(input->x, input->np, input->d+input->padding_d, pesi, baricentro, &peso_tot_cur);
+		baricentro_asm_omp(input->x, input->np, n_coordinate_tot, pesi, baricentro, &peso_tot_cur);
 		//-- esegui movimento volitivo --/
-		mov_volitivo_asm(input->x, input->np, input->d, input->padding_d, input->stepvol, 
-					    baricentro, (peso_tot_old < peso_tot_cur) ? -1.0 : 1.0, &(input->r[ind_r]));
-		ind_r += input->np;
-		peso_tot_old = peso_tot_cur;
-		calcola_val_f(f_cur, input, x_quadro, c_per_x);
+		mov_volitivo(input, baricentro, &peso_tot_old, &peso_tot_cur, &ind_r); // PRAGMA E ASM ALL'INTERNO		
+		//-- aggiorna valori f_cur     --/
+		calcola_val_f(f_cur, input);  // PRAMGA E ASM ALL'INTERNO 
 		//-- aggiorna parametri --//
 		input->stepind = input->stepind - decadimento_ind;
 		input->stepvol = input->stepvol - decadimento_vol;
@@ -376,66 +383,86 @@ void fss(params* input){
 	input->xh = alloc_matrix(1, input->d);
 	for(int j = 0; j < input->d; j++)
 		input->xh[j] = input->x[ind_f_min*(input->d+input->padding_d)+j];
-	if(!input->silent) printf("f_min = %lf\n", f_min);
+	if(!input->silent) printf("f_min = %f\n", f_min);
 }
 
 // MOVIMENTO INDIVIDUALE
-void mov_individuali(params* input, VECTOR deltaf, MATRIX deltax, MATRIX y, type* mindeltaf, VECTOR f_cur, 
-						VECTOR f_y, int* ind_r, VECTOR y_quadro, VECTOR c_per_y){
+void mov_individuali(params* input, VECTOR deltaf, MATRIX deltax, MATRIX y, type* mindeltaf, VECTOR f_cur, VECTOR f_y, int* ind_r){
 	int n_pesci = input->np;
 	int n_coordinate = input->d;
 	int padding_d = input->padding_d;
 	*mindeltaf = 1; // inizializzazione fittizia
-	type copy_stepind = input->stepind;	
-	int spostati = 0; // conta il numero di pesci spostati;
-	calcola_y_asm(input->x, y, n_pesci, n_coordinate, padding_d, copy_stepind, &(input->r[*ind_r]));
+	int n_coordinate_tot = n_coordinate+padding_d;
+	
+	#pragma omp parallel for //num_threads(MAX_NUM_THREADS)
+	for(int pesce = 0; pesce < n_pesci; pesce++){ // numero pesci	
+			// mov_individuale_pesce(input, deltax, y, pesce, *ind_r+pesce*n_coordinate, &(f_y[pesce]));
+			type y_2;
+			type c_y;
+			calcola_y_asm_omp(
+				&(input->x[pesce*n_coordinate_tot]), 
+				&(y[pesce*n_coordinate_tot]), 
+				input->d, input->stepind, &(input->r[*ind_r+pesce*n_coordinate]));
+			calcola_f_y_asm_omp(
+				&(input->x[pesce*n_coordinate_tot]), 
+				&(y[pesce*n_coordinate_tot]), 
+				input->d+input->padding_d, 
+				&(deltax[pesce*n_coordinate_tot]), 
+				input->c, &y_2, &c_y
+			);
+			f_y[pesce] = exp(y_2) + y_2 - c_y;
+	}
 	*ind_r = *ind_r + n_pesci*n_coordinate;
-	calcola_f_y_asm(input->x, y, n_pesci, n_coordinate+padding_d, deltax, input->c, y_quadro, c_per_y);
-	for(int pesce = 0; pesce < n_pesci; pesce++){ // numero pesci
-	    f_y[pesce] = exp(y_quadro[pesce]) + y_quadro[pesce] - c_per_y[pesce];
+	
+	#pragma omp parallel for //num_threads(MAX_NUM_THREADS)
+	for(int pesce = 0; pesce < n_pesci; pesce++){ // aggiorna input->x e deltaf
 		if(f_y[pesce] >= f_cur[pesce]){ // la posizione non è migliore
 			deltaf[pesce] = 0.0; 
-	  	}  // se il pesce non migliora non viene spostato
+		}  // se il pesce non migliora non viene spostato
 		else{ // il pesce ha acquisito una posizione migliore
-			spostati++;
-	    	deltaf[pesce] = f_y[pesce] - f_cur[pesce];
-	    	if(deltaf[pesce] < *mindeltaf ) *mindeltaf = deltaf[pesce]; //aggiorno il minimo deltaf
-	  		f_cur[pesce] = f_y[pesce]; // il nuovo valore del pesce
-	  	}// else
-	}//for
- 	if( spostati >= n_pesci/2 ){ // sono maggiori i pesci che si sono spostati, quindi mi conviene sovrascrivere y con i pesci che non si sono spostati
-		for(int pesce = 0; pesce < n_pesci; pesce++){ // se i pesci non si sono spostati deltaf = 0
-	    	if(deltaf[pesce] == 0){ // se il pesce non si è spostato (deltaf = 0)
-	        	for(int coordinata = 0; coordinata < n_coordinate; coordinata++){
-	            	y[(n_coordinate+padding_d)*pesce+coordinata] = input->x[(n_coordinate+padding_d)*pesce+coordinata];
-	        	}//tutte le coordinate di quel pesce	
-	    	}//if 	
-		}//for	
-	  	int tmp = (int) input->x;
-		input->x = y;
-	  	y = (type *) tmp;
-	}//if spostati >= rimasti	
-	else{ // sono maggiori i pesci che non si sono spostati
-		for(int pesce = 0; pesce < n_pesci; pesce++){ // se i pesci si sono spostati deltaf è diverso da 0
-	    	if(deltaf[pesce] != 0){
-	        	for(int coordinata = 0; coordinata < n_coordinate; coordinata++){
-	            	input->x[(n_coordinate+padding_d)*pesce+coordinata] = y[(n_coordinate+padding_d)*pesce+coordinata];
-	        	}//tutte le coordinate di quel pesce	
-	    	}//if 	
-		}//for	
-	}//else
+			for(int coordinata = 0; coordinata < n_coordinate; coordinata++){ // sposta coordinate
+	    		input->x[pesce*(n_coordinate_tot)+coordinata] = y[pesce*(n_coordinate_tot)+coordinata];
+			}
+			deltaf[pesce] = f_y[pesce] - f_cur[pesce];
+			#pragma omp critical
+			{
+				if(deltaf[pesce] < *mindeltaf ) 
+					*mindeltaf = deltaf[pesce]; //aggiorno il minimo deltaf
+			}
+			f_cur[pesce] = f_y[pesce]; // il nuovo valore del pesce
+		}// else
+	}
 }//mov_individuale
 
-
-void calcola_val_f(VECTOR f_cur, params* input, VECTOR x_quadro, VECTOR c_per_x){// conviene il suo utilizzo solo nell'inizializzazione
-  	int n_pesci = input->np;
+void calcola_val_f(VECTOR f_cur, params* input){// conviene il suo utilizzo solo nell'inizializzazione
 	int n_coordinate_tot = input->d + input->padding_d;
 
- 	calcola_val_f_asm(input->x, n_pesci, n_coordinate_tot, input->c, x_quadro, c_per_x);
-  	for(int pesce = 0; pesce < n_pesci; pesce++){
-    	f_cur[pesce] = exp(x_quadro[pesce]) + x_quadro[pesce] - c_per_x[pesce];
+	#pragma omp parallel for //num_threads(MAX_NUM_THREADS)
+	for(int pesce = 0; pesce < input->np; pesce++){
+		type x_2;
+  		type c_x;
+		calcola_val_f_asm_omp(&(input->x[pesce*n_coordinate_tot]), n_coordinate_tot, input->c, &x_2, &c_x);
+		f_cur[pesce] = exp(x_2) + x_2 - c_x;
   	}
 }//calcola_val_f
+
+// MOV VOLITIVO
+void mov_volitivo(params* input, VECTOR baricentro, type* peso_tot_old, type* peso_tot_cur, int* ind_r){
+	type direzione = 1;
+	if(*peso_tot_old < *peso_tot_cur)
+		 direzione = -1; 
+
+	#pragma omp parallel for //num_threads(MAX_NUM_THREADS)
+	for(int pesce = 0; pesce < input->np; pesce++){
+		mov_volitivo_asm_omp(
+			&(input->x[pesce*(input->d+input->padding_d)]), 
+			input->d, input->stepvol, baricentro, 
+			direzione, &(input->r[*ind_r+pesce])
+		);
+	}
+	*ind_r = *ind_r + input->np;
+	*peso_tot_old = *peso_tot_cur;
+}
 
 void calcola_f_min(int n_pesci, VECTOR f_cur, type* f_min, int* ind_f_min){
 	int pesce = 0;
@@ -448,14 +475,14 @@ void calcola_f_min(int n_pesci, VECTOR f_cur, type* f_min, int* ind_f_min){
 		}
 	}
 }
-int main(int argc, char** argv) {
 
+int main(int argc, char** argv) {
 	char fname[256];
 	char* coefffilename = NULL;
 	char* randfilename = NULL;
 	char* xfilename = NULL;
 	int i, j, k;
-	clock_t t;
+	double t;
 	float time;
 	
 	//
@@ -646,9 +673,9 @@ int main(int argc, char** argv) {
 		printf("Initial fish position file name: '%s'\n", xfilename);
 		printf("Dimensions: %d\n", input->d);
 		printf("Number of fishes [np]: %d\n", input->np);
-		printf("Individual step [si]: %lf\n", input->stepind);
-		printf("Volitive step [sv]: %lf\n", input->stepvol);
-		printf("Weight scale [w]: %lf\n", input->wscale);
+		printf("Individual step [si]: %f\n", input->stepind);
+		printf("Volitive step [sv]: %f\n", input->stepvol);
+		printf("Weight scale [w]: %f\n", input->wscale);
 		printf("Number of iterations [it]: %d\n", input->iter);
 	}
 
@@ -660,10 +687,10 @@ int main(int argc, char** argv) {
 	// Fish School Search
 	//
 
-	t = clock();
+	t = omp_get_wtime();
 	fss(input);
-	t = clock() - t;
-	time = ((float)t)/CLOCKS_PER_SEC;
+	t = omp_get_wtime() - t;
+	time = ((float)t);
 
 	if(!input->silent)
 		printf("FSS time = %.3f secs\n", time);
@@ -673,7 +700,7 @@ int main(int argc, char** argv) {
 	//
 	// Salva il risultato di xh
 	//
-	sprintf(fname, "xh64_%d_%d_%d.ds2", input->d, input->np, input->iter);
+	sprintf(fname, "xh32_%d_%d_%d.ds2", input->d, input->np, input->iter);
 	save_data(fname, input->xh, 1, input->d);
 	if(input->display){
 		if(input->xh == NULL)
@@ -681,8 +708,8 @@ int main(int argc, char** argv) {
 		else{
 			printf("xh: [");
 			for(i=0; i<input->d-1; i++)
-				printf("%lf,", input->xh[i]);
-			printf("%lf]\n", input->xh[i]);
+				printf("%f,", input->xh[i]);
+			printf("%f]\n", input->xh[i]);
 		}
 	}
 
@@ -691,3 +718,6 @@ int main(int argc, char** argv) {
 
 	return 0;
 }
+
+// PER COMPILARE SENZA FILE ASM
+// gcc -m32 -msse -O0 -no-pie ./sseutils32.o ./fss32c.c -o fss32c -lm && ./fss32c -c ../../data/coeff32_8.ds2 -r ../../data/rand32_8_64_250.ds2 -x ../../data/x32_8_64.ds2 -np 64 -si 1 -sv 0.1 -w 10 -it 250 -d;

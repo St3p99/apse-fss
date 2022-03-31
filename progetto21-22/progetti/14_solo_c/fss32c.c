@@ -139,74 +139,6 @@ MATRIX load_data(char* filename, int *n, int *k) {
 	return data;
 }
 
-<<<<<<< HEAD:progetto21-22/progetti/14/c_code/fss32c.c
-=======
-MATRIX load_coeff_padding(char* filename, int padding) {
-	FILE* fp;
-	int rows, cols, status, i;
-	
-	fp = fopen(filename, "rb");
-	
-	if (fp == NULL){
-		printf("'%s': bad data file name!\n", filename);
-		exit(0);
-	}
-	
-	status = fread(&cols, sizeof(int), 1, fp);
-	status = fread(&rows, sizeof(int), 1, fp);
-	MATRIX data = alloc_matrix(rows, cols+padding);
-	status = fread(data, sizeof(type), rows*cols, fp);
-	// padding
-	padding_vector(data, rows, padding);
-	fclose(fp);
-	
-	return data;
-}
-
-MATRIX load_x_padding(char* filename, int *n, int *k, int* padding_d) {
-	FILE* fp;
-	int rows, cols, status, i;
-	
-	fp = fopen(filename, "rb");
-	
-	if (fp == NULL){
-		printf("'%s': bad data file name!\n", filename);
-		exit(0);
-	}
-	
-	status = fread(&cols, sizeof(int), 1, fp);
-	status = fread(&rows, sizeof(int), 1, fp);
-	
-	MATRIX data;
-	int mul = 4;
-	int resto_col = cols % mul;
-	if( resto_col != 0 ){ // num_colonne non multiplo di mul (4)
-		*padding_d = (cols - resto_col + mul) - cols; // numero di zeri da aggiungere ad ogni riga
-		data = alloc_matrix(rows,cols + *padding_d);	
-		int n_cols_w_padding = cols + *padding_d; // numero di colonne considerando il padding
-		for(int i = 0; i < rows; i++){
-			// load riga
-			status = fread(&data[i*(n_cols_w_padding)], sizeof(type), cols, fp);			
-			// padding con *padding_d zeri alla fine della riga
-			padding_vector(&data[i*(n_cols_w_padding)], cols, *padding_d);
-		}
-	}
-	else{
-		// num_colonne multiplo di mul (4)
-		*padding_d = 0;
-		data = alloc_matrix(rows,cols);
-		status = fread(data, sizeof(type), rows*cols, fp);
-	}
-	fclose(fp);
-	
-	*n = rows;
-	*k = cols;
-	
-	return data;
-}
-
-
->>>>>>> develop:progetto21-22/progetti/14/fss32c.c
 /*
 * 	save_data
 * 	=========
@@ -267,13 +199,8 @@ void fss(params* input){
 	// 		 leggendo posizioni da file x32_8_64.ds2
 	// -------------------------------------------------
 	//-- inizializza peso Wi per ogni pesce i --//
-<<<<<<< HEAD:progetto21-22/progetti/14/c_code/fss32c.c
 	// stampa_coordinate(input);
 	VECTOR pesi = alloc_matrix(1, input->np);
-=======
-	VECTOR pesi = alloc_matrix(1, input->np+input->padding_np);
-	padding_vector(pesi, input->np, input->padding_np);
->>>>>>> develop:progetto21-22/progetti/14/fss32c.c
 	int i;
 	for(i = 0; i < input->np; i++){
 		pesi[i] = input->wscale/2;
@@ -324,7 +251,7 @@ void fss(params* input){
 		it++;
 	}
 	calcola_f_min(input->np, f_cur, &f_min, &ind_f_min);
-	if(!input->silent) printf("ind_f_min = %d\n", ind_f_min);
+	printf("ind_f_min = %d\n", ind_f_min);
 	//------- RETURN POS MIN ---------------
 	// input->xh = &input->x[ind_f_min*(input->d)];
 	input->xh = alloc_matrix(1, input->d);

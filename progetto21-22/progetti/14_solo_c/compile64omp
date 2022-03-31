@@ -4,4 +4,4 @@ nasm -f elf64 sseutils64.nasm;
 for f in $(ls *64omp.nasm); do
 	nasm -f elf64 $f;
 done;
-gcc -w -m64 -msse -O0 -no-pie -fopenmp sseutils64.o *64omp.o fss64ompc.c -o fss64ompc -lm
+gcc -m64 -msse -O0 -no-pie -fopenmp sseutils64.o *64omp.o fss64comp.c -o fss64comp -lm
