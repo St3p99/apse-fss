@@ -3,5 +3,14 @@
 # Architetture e Programmazione dei Sistemi di Elaborazione - Progetto a.a 2021/22
 
 
-## Descrizione del problema
-La Fish School Search (FSS) è un algoritmo di ottimizzazione ispirato al comportamento dei banchi di pesci. L’idea di base dell’algoritmo nasce dai meccanismi di alimentazione e movimento coordinato tipico di questo contesto. In particolare, i pesci nuotano verso il “gradiente positivo” per poter mangiare e prendere così peso. Dato che i pesci più pesanti hanno maggiore influenza sul banco nel processo di ricerca collettiva di cibo, il baricentro del banco tende a spostarsi verso i posti migliori dello spazio di ricerca.
+# Problem description
+Minimize a given function using FSS using hardware optimization techniques discussed during the lessons ( i.e. Loop unrolling, Loop vectorization, Cache blocking, ...).
+
+## Fish School Search Algorithm
+Fish School Search (FSS), proposed by Bastos Filho and Lima Neto in 2008 is, in its basic version,[1] an unimodal optimization algorithm inspired on the collective behavior of fish schools. The mechanisms of feeding and coordinated movement were used as inspiration to create the search operators. The core idea is to make the fishes “swim” toward the positive gradient in order to “eat” and “gain weight”. Collectively, the heavier fishes have more influence on the search process as a whole, what makes the barycenter of the fish school moves toward better places in the search space over the iterations.
+
+## Hardware optimization used
+In this project, we used different hardware optimization techniques with both SSE and AVX instructions in Assembler language.
+In particular, we used:
+- Loop vectorization: a SIMD technique to perform the same operation on multiple data points simultaneously.
+- Loop unrolling: a loop transformation technique (ILP) to increase a program's speed by reducing or eliminating instructions that control the loop, such as pointer arithmetic and "end of loop" tests on each iteration. To eliminate this computational overhead, loops can be re-written as a repeated sequence of similar independent statements.
