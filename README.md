@@ -3,8 +3,8 @@
 # Architetture e Programmazione dei Sistemi di Elaborazione - Progetto a.a 2021/22
 
 
-# Problem description
-Minimize a given function using FSS using hardware optimization techniques discussed during the lessons ( i.e. Loop unrolling, Loop vectorization, Cache blocking, ...).
+# Project description
+Minimize a given function with Fish School Search Algorithm using hardware optimization techniques discussed during the lessons ( i.e. Loop unrolling, Loop vectorization, Cache blocking, ...).
 
 ## Fish School Search Algorithm
 Fish School Search (FSS), proposed by Bastos Filho and Lima Neto in 2008 is, in its basic version,[1] an unimodal optimization algorithm inspired on the collective behavior of fish schools. The mechanisms of feeding and coordinated movement were used as inspiration to create the search operators. The core idea is to make the fishes “swim” toward the positive gradient in order to “eat” and “gain weight”. Collectively, the heavier fishes have more influence on the search process as a whole, what makes the barycenter of the fish school moves toward better places in the search space over the iterations.
